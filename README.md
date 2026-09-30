@@ -5,6 +5,16 @@
 </p>
 
 <p align="center">
+  <a href="https://github.com/AbyssGG/Isvik" title="Original Isvik project">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="resources/isvik-lockup.png">
+      <img src="resources/isvik-lockup-black.png" alt="Original Isvik logo" width="240">
+    </picture>
+  </a><br>
+  <sub>Original Isvik logo · © 2026 AbyssGG</sub>
+</p>
+
+<p align="center">
   <strong>Built for OpenVINO and local AI on Intel AI PCs.</strong><br>
   C++20 · OpenVINO GenAI · Optional ONNX support · Desktop chat · Interactive CLI · Local APIs
 </p>
@@ -12,6 +22,7 @@
 <p align="center">
   <a href="CMakeLists.txt"><img src="https://img.shields.io/badge/version-0.1.0-1a73e8?style=flat-square" alt="Isvik.cpp source version 0.1.0"></a>
   <a href="docs/MODEL_SUPPORT.md"><img src="https://img.shields.io/badge/OpenVINO%20GenAI-2026.4.0.0-0071C5?style=flat-square&amp;logo=intel&amp;logoColor=white" alt="OpenVINO GenAI 2026.4.0.0"></a>
+  <a href="docs/MODEL_SUPPORT.md"><img src="https://img.shields.io/badge/ONNX%20Runtime%20GenAI-0.17.0-005CED?style=flat-square" alt="Optional ONNX Runtime GenAI 0.17.0"></a>
   <a href="docs/BUILDING.md"><img src="https://img.shields.io/badge/C%2B%2B-20-00599C?style=flat-square&amp;logo=cplusplus&amp;logoColor=white" alt="C++20"></a>
   <a href="docs/TENSORRT_GGUF.md"><img src="https://img.shields.io/badge/NVIDIA-TensorRT%20GGUF%20experimental-76B900?style=flat-square&amp;logo=nvidia&amp;logoColor=white" alt="Experimental NVIDIA TensorRT GGUF support"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-Apache%202.0-2E7D32?style=flat-square" alt="Apache 2.0 license"></a>

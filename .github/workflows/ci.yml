@@ -1,0 +1,35 @@
+name: Isvik.cpp CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  windows-msvc:
+    runs-on: windows-2025
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure
+        run: >-
+          cmake -S . -B out/build/ci-windows -G "Visual Studio 17 2022" -A x64
+          -DBUILD_TESTING=ON -DISVIK_ENABLE_OPENVINO=OFF
+      - name: Build
+        run: cmake --build out/build/ci-windows --config Debug --parallel
+      - name: Test
+        run: ctest --test-dir out/build/ci-windows -C Debug --output-on-failure
+
+  linux-gcc:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install build tools
+        run: sudo apt-get update && sudo apt-get install -y build-essential ninja-build
+      - name: Configure
+        run: >-
+          cmake -S . -B out/build/ci-linux -G Ninja
+          -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTING=ON -DISVIK_ENABLE_OPENVINO=OFF
+      - name: Build
+        run: cmake --build out/build/ci-linux --parallel
+      - name: Test
+        run: ctest --test-dir out/build/ci-linux --output-on-failure

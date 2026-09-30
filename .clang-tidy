@@ -1,0 +1,11 @@
+Checks: >-
+  -*,
+  bugprone-*,
+  cppcoreguidelines-*,
+  google-*,
+  modernize-*,
+  performance-*,
+  readability-*
+WarningsAsErrors: ''
+HeaderFilterRegex: '^(include|src|lsvik)/'
+FormatStyle: file

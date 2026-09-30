@@ -1,0 +1,710 @@
+import { TextEdit, ComboBox, ListView, ScrollView, CheckBox, AboutSlint, Palette } from "std-widgets.slint";
+
+export struct ModelItem { id: string, name: string, path: string, meta: string, state: string, runnable: bool, is-default: bool }
+export struct DeviceItem { id: string, name: string }
+export struct MemoryItem { id: string, content: string, tags: string, scope: string, pinned: bool }
+export struct ConversationItem { id: string, title: string }
+export struct ChatMessage {
+    role: string, content: string, model_info: string, request_info: string, statistics: string,
+    is_latest: bool, saved: bool
+}
+component Body inherits Text {
+    color: #30343b; font-size: 15px;
+    vertical-stretch: 0; vertical-alignment: center;
+}
+component Label inherits Body { color: #657080; }
+component Action inherits Rectangle {
+    in property <string> text;
+    in property <bool> primary: false;
+    in property <bool> danger: false;
+    in property <bool> enabled: true;
+    callback clicked();
+    height: 38px; min-width: caption.preferred-width + 28px; border-radius: 6px;
+    border-width: primary ? 0px : 1px; border-color: #d5dce5;
+    background: !enabled ? #eef1f5 : primary ? (touch.has-hover ? #084bb7 : #0b57d0) : touch.has-hover ? #edf3fd : #ffffff;
+    accessible-role: button; accessible-label: text;
+    accessible-action-default => { if root.enabled { root.clicked(); } }
+    caption := Text { text: root.text; color: !root.enabled ? #8993a3 : root.primary ? white : root.danger ? #b3261e : #0b57d0; font-size: 15px; font-weight: 400; horizontal-alignment: center; vertical-alignment: center; }
+    keys := FocusScope { enabled: root.enabled; key-pressed(event) => { if event.text == Key.Return || event.text == " " { root.clicked(); return accept; } return reject; } }
+    touch := TouchArea { enabled: root.enabled; mouse-cursor: pointer; clicked => { keys.focus(); root.clicked(); } }
+}
+component Input inherits Rectangle {
+    in-out property <string> text;
+    in property <string> placeholder;
+    in property <bool> enabled: true;
+    in property <bool> password: false;
+    callback edited(string);
+    height: 38px; min-width: 80px; border-width: field.has-focus ? 2px : 1px;
+    border-color: field.has-focus ? #0b57d0 : #d5dce5; border-radius: 8px; background: enabled ? #ffffff : #f1f3f6;
+    Text { x: 12px; width: parent.width - 24px; text: root.placeholder; color: #7b8797; font-size: 15px; vertical-alignment: center; visible: field.text == ""; }
+    field := TextInput { x: 12px; width: parent.width - 24px; text <=> root.text; enabled: root.enabled; input-type: root.password ? InputType.password : InputType.text; font-size: 15px; color: #202b3b; vertical-alignment: center; single-line: true; edited => { root.edited(self.text); } }
+}
+component NavItem inherits Rectangle {
+    in property <string> text;
+    in property <image> icon;
+    in property <bool> selected;
+    callback clicked();
+    height: 40px; border-radius: 6px; border-width: selected ? 1px : 0px; border-color: #dddddd; background: selected ? #ffffff : hover.has-hover ? #e9e9e9 : transparent;
+    accessible-role: button; accessible-label: text; accessible-action-default => { root.clicked(); }
+    HorizontalLayout { padding-left: 12px; padding-right: 12px; spacing: 12px;
+        Rectangle { width: 20px; background: transparent; Image { source: root.icon; x: 0px; y: (parent.height - 20px) / 2; width: 20px; height: 20px; } }
+        Text { text: root.text; color: #343434; font-size: 15px; font-weight: 400; vertical-alignment: center; }
+    }
+    keys := FocusScope { key-pressed(event) => { if event.text == Key.Return || event.text == " " { root.clicked(); return accept; } return reject; } }
+    hover := TouchArea { mouse-cursor: pointer; clicked => { keys.focus(); root.clicked(); } }
+}
+component Card inherits Rectangle { background: #ffffff; border-radius: 10px; border-width: 1px; border-color: #e5e5e5; }
+component ChatHistory inherits Rectangle {
+    in property <[ChatMessage]> messages;
+    in property <bool> chinese: true;
+    in property <bool> can-remember-exchange: false;
+    in property <bool> operation-busy: false;
+    in-out property <bool> follow-tail: true;
+    callback remember-exchange();
+    background: transparent;
+    changed messages => {
+        if root.follow-tail && root.messages.length > 0 {
+            chat-scroll.content-y = min(0px, chat-scroll.visible-height - chat-content.height);
+        }
+    }
+    chat-scroll := ScrollView {
+        width: parent.width; height: parent.height;
+        mouse-drag-pan-enabled: true;
+        chat-content := VerticalLayout { width: parent.width; padding-top: 12px; padding-bottom: 20px; spacing: 28px;
+            for item in root.messages: VerticalLayout { width: parent.width; spacing: 10px;
+                if item.role == "user": HorizontalLayout { spacing: 12px;
+                    Rectangle { horizontal-stretch: 1; }
+                    Rectangle { width: min(min(570px, parent.width * 0.86), user-bubble-measure.preferred-width + 32px); height: max(44px, user-bubble-content.preferred-height + 24px); border-radius: 20px; background: #f1f3f4;
+                        VerticalLayout { padding-left: 16px; padding-right: 16px; padding-top: 12px; padding-bottom: 12px;
+                            user-bubble-content := TextInput { text: item.content; single-line: false; read-only: true; horizontal-stretch: 1; font-size: 17px; color: #303030; wrap: word-wrap; }
+                        }
+                        user-bubble-measure := Text { text: item.content; font-size: 17px; visible: false; }
+                    }
+                }
+                if item.role == "assistant": VerticalLayout { spacing: 10px;
+                    HorizontalLayout { height: 34px; spacing: 8px;
+                        Body { text: root.chinese ? "回答" : "Answer"; font-size: 17px; font-weight: 600; color: #344054; }
+                        Rectangle { horizontal-stretch: 1; }
+                    }
+                    if item.content == "": Label { text: root.chinese ? "正在生成…" : "Generating…"; font-size: 16px; }
+                    if item.content != "": TextInput { text: item.content; single-line: false; read-only: true; horizontal-stretch: 1; font-size: 17px; color: #202124; wrap: word-wrap; }
+                    if item.model_info != "": Rectangle {
+                        width: min(model-tag-text.preferred-width + 20px, parent.width);
+                        height: 28px; border-radius: 14px; background: #f1f3f4;
+                        Text { x: 10px; width: parent.width - 20px; height: parent.height;
+                            text: item.model_info; font-size: 14px; color: #4b5563;
+                            vertical-alignment: center; overflow: elide;
+                        }
+                        model-tag-text := Text { text: item.model_info; font-size: 14px; visible: false; }
+                    }
+                    if item.statistics != "": Text { text: item.statistics; horizontal-stretch: 1; font-size: 14px; color: #344054; wrap: word-wrap; }
+                    if item.request_info != "": Text { text: item.request_info; horizontal-stretch: 1; font-size: 14px; color: #536277; wrap: word-wrap; }
+                    if item.is_latest && root.can-remember-exchange && !item.saved: Action { text: root.chinese ? "记住这次问答" : "Remember this exchange"; enabled: !root.operation-busy; clicked => { root.remember-exchange(); } }
+                    if item.saved: Label { text: root.chinese ? "已保存到记忆" : "Saved to memory"; font-size: 14px; }
+                }
+            }
+        }
+        scrolled => {
+            root.follow-tail = self.content-y <= min(0px, self.visible-height - chat-content.height) + 48px;
+        }
+    }
+}
+
+export component MainWindow inherits Window {
+    in property <bool> chinese: true;
+    in property <string> app_title: "Isvik";
+    in property <string> tagline: "本地 AI 运行时";
+    in property <string> overview: "概览";
+    in property <string> playground: "试验场";
+    in property <string> models: "模型库";
+    in property <string> devices: "设备";
+    in property <string> status_label;
+    in property <string> status_ready;
+    in property <string> model_path_label;
+    in property <string> model_path_placeholder;
+    in property <string> device_label: "设备";
+    in property <string> max_tokens_label: "最大词元数";
+    in property <string> load_model_label: "加载模型";
+    in property <string> prompt_label;
+    in property <string> prompt_placeholder;
+    in property <string> generate_label: "生成";
+    in property <string> cancel_label: "停止";
+    in property <string> response_label: "回答";
+    in property <string> clear_label: "清空";
+    in property <string> refresh_devices_label;
+    in property <string> model_list_label;
+    in property <string> device_list_label;
+    in property <string> language_button: "English";
+    in-out property <string> active_page: "playground";
+    in-out property <string> model_path;
+    in-out property <string> folder_path;
+    in-out property <string> search_text;
+    in-out property <string> rename_text;
+    in-out property <string> device_name: "CPU";
+    in-out property <string> backend_name: "OpenVINO";
+    in-out property <string> api_host: "127.0.0.1";
+    in-out property <string> api_port: "1234";
+    in-out property <string> api_key;
+    in-out property <bool> api_key_hidden: true;
+    in property <[string]> api_key_names;
+    in-out property <string> api_key_name;
+    in-out property <string> api_key_label;
+    in-out property <string> max_tokens_text: "128";
+    in-out property <int> decoding_index: 8;
+    in-out property <string> decoding_value_text: "0.8";
+    in-out property <string> prompt_text;
+    in-out property <int> prompt_line_count: 2;
+    in property <string> response_text;
+    in property <string> status_message;
+    in property <string> error_detail;
+    in property <bool> status_error: false;
+    in property <string> model_list_text;
+    in property <string> device_list_text;
+    in property <bool> operation_busy: false;
+    in property <bool> model_loaded: false;
+    in property <bool> api_server_running: false;
+    in property <bool> api_server_transition: false;
+    in property <string> api_model_info;
+    in property <bool> generating: false;
+    in property <[ModelItem]> model_items;
+    in property <[string]> device_items;
+    in property <[string]> backend_items;
+    in property <[DeviceItem]> device_rows;
+    in property <int> model_count;
+    in property <int> visible_model_count;
+    in property <[string]> chat_model_items;
+    in-out property <int> chat_model_index: -1;
+    in property <string> last_prompt;
+    in property <string> current_conversation_title;
+    in property <string> active_conversation_id;
+    in-out property <string> pending_delete_conversation_id;
+    in property <[ConversationItem]> conversation_items;
+    in property <bool> can_remember_exchange: false;
+    in property <bool> exchange_saved: false;
+    in property <[ChatMessage]> chat_messages;
+    in property <int> device_count;
+    in property <string> selected_id;
+    in property <string> selected_name;
+    in property <string> selected_path;
+    in property <string> selected_meta;
+    in property <string> selected_issue;
+    in-out property <string> dismissed_issue: "";
+    in property <bool> selected_runnable;
+    in property <string> loaded_name;
+    in property <string> loaded_device;
+    in property <string> loaded_model_info;
+    in property <string> catalog_location;
+    in property <string> memory_location;
+    in property <string> memory_status;
+    in property <string> context_status;
+    in property <[MemoryItem]> memory_items;
+    in property <bool> memory_ready: false;
+    in-out property <string> memory_query;
+    in-out property <string> memory_content;
+    in-out property <string> memory_tags;
+    in-out property <string> context_tokens_text: "8192";
+    in-out property <string> selected_memory_id;
+    in-out property <bool> selected_memory_pinned: false;
+    in-out property <bool> context_memories_enabled: true;
+    in-out property <bool> session_memory_enabled: true;
+    in-out property <bool> session_memory_scope: false;
+    in-out property <bool> memory_remove_pending: false;
+    in-out property <bool> show_details: false;
+    in-out property <bool> remove_pending: false;
+    in-out property <bool> show_third_party_licenses: false;
+    callback toggle_language();
+    callback load_model(string, string);
+    callback generate_text(string, string, int, string);
+    callback update_prompt_lines(string);
+    callback cancel_generation();
+    callback clear_response();
+    callback open_conversation(string);
+    callback delete_conversation(string);
+    callback refresh_devices();
+    callback switch_backend(string);
+    callback browse_folder();
+    callback scan_folder(string);
+    callback select_model(string);
+    callback filter_models(string);
+    callback rename_model(string, string);
+    callback default_model(string);
+    callback remove_model(string);
+    callback unload_model();
+    callback choose_chat_model(int);
+    callback remember_exchange();
+    callback search_memories(string);
+    callback select_memory(string);
+    callback save_memory(string, string, bool);
+    callback pin_memory(string, bool);
+    callback remove_memory(string);
+    callback update_context(string, bool, bool);
+    callback toggle_api_server(string, string, string);
+    callback generate_api_key();
+    callback save_api_key(string, string);
+    callback select_api_key(string);
+    callback delete_api_key(string);
+    title: app_title; preferred-width: 1280px; preferred-height: 860px; min-width: 1080px; min-height: 740px;
+    default-font-family: "Microsoft YaHei UI"; default-font-size: 15px; background: #fafafa;
+    icon: @image-url("../resources/isvik-icon.png");
+    init => { Palette.color-scheme = ColorScheme.light; }
+    HorizontalLayout {
+        spacing: 0px;
+        Rectangle {
+            width: 244px; background: #f3f3f3;
+            VerticalLayout { spacing: 0px;
+                HorizontalLayout { height: 64px; padding-left: 24px; padding-right: 24px; spacing: 12px;
+                    Rectangle { width: 32px; Image { source: @image-url("../resources/isvik-icon.png"); width: 32px; height: 32px; y: (parent.height - self.height) / 2; } }
+                    Text { text: "Isvik"; font-size: 19px; font-weight: 600; color: #303030; vertical-alignment: center; }
+                }
+                VerticalLayout { padding-left: 12px; padding-right: 12px; padding-bottom: 16px; spacing: 4px;
+                NavItem { text: root.chinese ? "新聊天" : "New chat"; icon: @image-url("icons/plus.svg"); selected: root.active_page == "playground" && root.active_conversation_id == ""; clicked => { root.active_page = "playground"; if !root.operation_busy { root.clear_response(); } } }
+                if root.conversation_items.length > 0: VerticalLayout { spacing: 4px;
+                    Rectangle { height: 28px; Text { x: 12px; width: parent.width - 24px; text: root.chinese ? "最近" : "Recent"; font-size: 14px; color: #737b85; vertical-alignment: center; } }
+                    ListView { height: min(260px, root.conversation_items.length * 36px);
+                        for item in root.conversation_items: HorizontalLayout { height: 36px; spacing: 2px;
+                            Rectangle { horizontal-stretch: 1; min-width: 0px; height: 36px; border-radius: 6px;
+                                background: root.active_conversation_id == item.id ? #e8f0fe : conversation-hit.has-hover ? #e9e9e9 : transparent;
+                                Text { x: 12px; width: parent.width - 24px; height: parent.height; text: item.title; color: #343434; font-size: 14px; vertical-alignment: center; overflow: elide; }
+                                conversation-keys := FocusScope { key-pressed(event) => { if event.text == Key.Return || event.text == " " { root.open_conversation(item.id); return accept; } return reject; } }
+                                conversation-hit := TouchArea { mouse-cursor: pointer; clicked => { conversation-keys.focus(); root.open_conversation(item.id); } }
+                            }
+                            if root.pending_delete_conversation_id == item.id: Action { text: root.chinese ? "删除" : "Delete"; danger: true; enabled: !root.operation_busy; clicked => { root.delete_conversation(item.id); root.pending_delete_conversation_id = ""; } }
+                            if root.pending_delete_conversation_id == item.id: Action { text: root.chinese ? "取消" : "Cancel"; enabled: !root.operation_busy; clicked => { root.pending_delete_conversation_id = ""; } }
+                            if root.pending_delete_conversation_id != item.id && (conversation-hit.has-hover || root.active_conversation_id == item.id): Action { text: "×"; enabled: !root.operation_busy; clicked => { root.pending_delete_conversation_id = item.id; } }
+                        }
+                    }
+                }
+                Rectangle { height: 12px; }
+                Rectangle { height: 32px; Text { x: 12px; width: parent.width - 24px; text: root.chinese ? "工作空间" : "Workspace"; font-size: 14px; color: #737b85; vertical-alignment: center; } }
+                NavItem { text: root.overview; icon: @image-url("icons/dashboard.svg"); selected: root.active_page == "overview"; clicked => { root.active_page = "overview"; } }
+
+                NavItem { text: root.models; icon: @image-url("icons/folder.svg"); selected: root.active_page == "models"; clicked => { root.active_page = "models"; } }
+                NavItem { text: root.chinese ? "记忆与上下文" : "Memory & context"; icon: @image-url("icons/memory.svg"); selected: root.active_page == "memory"; clicked => { root.active_page = "memory"; } }
+                NavItem { text: root.devices; icon: @image-url("icons/chip.svg"); selected: root.active_page == "devices"; clicked => { root.active_page = "devices"; } }
+                NavItem { text: "API Server"; icon: @image-url("icons/server.svg"); selected: root.active_page == "api"; clicked => { root.active_page = "api"; } }
+                Rectangle { vertical-stretch: 1; }
+                NavItem { text: root.chinese ? "设置与关于" : "Settings & about"; icon: @image-url("icons/info.svg"); selected: root.active_page == "about"; clicked => { root.active_page = "about"; } }
+                }
+            }
+        }
+        VerticalLayout { spacing: 0px;
+            Rectangle { height: 64px;
+                HorizontalLayout { padding-left: 32px; padding-right: 32px; spacing: 12px;
+                    Text { height: 64px; text: root.active_page == "playground" ? (root.current_conversation_title != "" ? root.current_conversation_title : (root.chinese ? "新聊天" : "New chat")) : root.active_page == "memory" ? (root.chinese ? "记忆与上下文" : "Memory & context") : root.tagline; color: #777777; font-size: 15px; vertical-alignment: center; overflow: elide; }
+                    Rectangle { horizontal-stretch: 1; }
+                    Rectangle { width: 9px; height: 64px; background: transparent; Rectangle { x: 0px; y: (parent.height - 9px) / 2; width: 9px; height: 9px; border-radius: 5px; background: root.status_error ? #b3261e : root.operation_busy ? #d18b00 : #188038; } }
+                    Text { height: 64px; text: root.operation_busy ? (root.chinese ? "处理中" : "Working") : root.model_loaded ? (root.chinese ? "模型就绪" : "Model ready") : (root.chinese ? "本地运行" : "Running locally"); color: #657080; font-size: 15px; vertical-alignment: center; }
+                    Text { height: 64px; text: root.chinese ? "后端" : "Backend"; color: #657080; font-size: 14px; vertical-alignment: center; }
+                    Rectangle { width: 142px; height: 64px;
+                        ComboBox { x: 0px; y: (parent.height - self.height) / 2; width: parent.width; height: 36px; model: root.backend_items; current-value <=> root.backend_name; enabled: !root.operation_busy && !root.api_server_running && !root.api_server_transition; selected(value) => { root.switch_backend(value); } }
+                    }
+                    Rectangle { width: language-action.min-width; height: 64px; language-action := Action { y: (parent.height - self.height) / 2; text: root.language_button; clicked => { root.toggle_language(); } } }
+                }
+            }
+            VerticalLayout { padding-left: 32px; padding-right: 32px; padding-bottom: 24px; spacing: 18px;
+                if root.active_page != "playground": VerticalLayout { height: 64px; spacing: 2px;
+                    Body { text: root.active_page == "models" ? (root.chinese ? "模型库" : "Model library") : root.active_page == "devices" ? root.devices : root.active_page == "memory" ? (root.chinese ? "记忆与上下文" : "Memory & context") : root.active_page == "api" ? "API Server" : root.active_page == "about" ? (root.chinese ? "关于 Isvik" : "About Isvik") : root.overview; height: 38px; font-size: 24px; font-weight: 500; color: #1f2b3d; }
+                    Label { text: root.active_page == "models" ? (root.chinese ? "发现、整理并运行你的本地模型" : "Discover, organize and run your local models") : root.active_page == "playground" ? (root.chinese ? "让想法从一次对话开始" : "Start with a conversation") : root.active_page == "devices" ? (root.chinese ? "选择适合模型的计算设备" : "Choose where your model runs") : root.active_page == "memory" ? (root.chinese ? "管理你保存的信息，并控制每次对话使用的上下文" : "Manage saved notes and set the context sent with each prompt") : root.active_page == "api" ? (root.chinese ? "通过 Isvik、OpenAI 或 Anthropic 接口连接本地模型" : "Connect to your local model with Isvik, OpenAI, or Anthropic APIs") : root.tagline; }
+                }
+                if root.active_page == "models": VerticalLayout { spacing: 16px;
+                    Card { height: 114px;
+                        VerticalLayout { padding: 20px; spacing: 12px;
+                            HorizontalLayout { height: 24px; spacing: 10px;
+                                Rectangle { width: 22px; Image { source: @image-url("icons/folder.svg"); width: 20px; height: 20px; y: (parent.height - self.height) / 2; } }
+                                Text { text: root.chinese ? "模型目录" : "Model directory"; color: #353535; font-size: 15px; font-weight: 600; vertical-alignment: center; }
+                                Text { text: root.chinese ? "包含子文件夹 · 自动识别模型格式" : "Includes subfolders · detects model formats"; color: #657080; font-size: 14px; vertical-alignment: center; }
+                                Rectangle { horizontal-stretch: 1; }
+                            }
+                            HorizontalLayout { height: 38px; spacing: 12px;
+                                Input { text <=> root.folder_path; placeholder: root.chinese ? "选择存放模型的文件夹，例如 D:\\Model" : "Choose your model folder"; enabled: !root.operation_busy; }
+                                Action { text: root.chinese ? "选择目录" : "Choose folder"; enabled: !root.operation_busy; clicked => { root.browse_folder(); } }
+                                Action { text: root.chinese ? "扫描模型" : "Scan models"; primary: true; enabled: !root.operation_busy && root.folder_path != ""; clicked => { root.scan_folder(root.folder_path); } }
+                            }
+                        }
+                    }
+                    HorizontalLayout { height: 38px; spacing: 16px;
+                        Text { text: root.chinese ? "全部模型  ·  " + root.model_count : "All models  ·  " + root.model_count; font-size: 18px; font-weight: 600; color: #353535; vertical-alignment: center; }
+                        Rectangle { horizontal-stretch: 1; }
+                        Input { width: 290px; text <=> root.search_text; placeholder: root.chinese ? "搜索名称、架构或路径" : "Search name, architecture or path"; edited(value) => { root.filter_models(value); } }
+                    }
+                    HorizontalLayout { spacing: 18px;
+                        Card { horizontal-stretch: 1;
+                            if root.model_count == 0: VerticalLayout { padding: 36px; alignment: center; spacing: 18px;
+                                Image { source: @image-url("icons/folder.svg"); height: 56px; }
+                                Text { text: root.chinese ? "添加你的第一个模型" : "Add your first model"; font-size: 22px; color: #353535; horizontal-alignment: center; }
+                                Label { text: root.chinese ? "选择模型目录，自动找到可用的模型入口。" : "Choose a directory to discover model entries."; horizontal-alignment: center; wrap: word-wrap; }
+                                Action { text: root.chinese ? "选择模型目录" : "Choose model folder"; primary: true; enabled: !root.operation_busy; clicked => { root.browse_folder(); } }
+                            }
+                            if root.visible_model_count == 0 && root.model_count > 0: Label { text: root.chinese ? "没有匹配的模型" : "No matching models"; horizontal-alignment: center; }
+                            if root.visible_model_count > 0: ListView {
+                                for item in root.model_items: Rectangle { height: 110px; background: root.selected_id == item.id ? #e8f0fe : hit.has-hover ? #f5f8fc : white;
+                                    accessible-role: button;
+                                    accessible-label: item.name;
+                                    accessible-action-default => { root.remove_pending = false; root.select_model(item.id); }
+                                    Rectangle { x: 0px; width: 4px; background: root.selected_id == item.id ? #0b57d0 : transparent; }
+                                    HorizontalLayout { padding: 16px; spacing: 14px;
+                                        Rectangle { width: 40px; Rectangle { width: 40px; height: 40px; y: (parent.height - self.height) / 2; border-radius: 10px; background: #edf3fc; Image { source: @image-url("icons/chip.svg"); x: 9px; y: 9px; width: 22px; height: 22px; } } }
+                                        VerticalLayout { spacing: 3px;
+                                            Body { text: item.name; height: 28px; color: #303030; font-weight: 600; font-size: 17px; overflow: elide; }
+                                            Label { text: item.meta; height: 22px; font-size: 14px; overflow: elide; }
+                                            Label { text: item.state; height: 22px; font-size: 14px; color: item.runnable ? #188038 : #996600; overflow: elide; }
+                                        }
+                                        Text { text: item.is-default ? (root.chinese ? "默认" : "Default") : ""; color: #0b57d0; font-size: 14px; vertical-alignment: center; }
+                                    }
+                                    Rectangle { height: 1px; y: parent.height - 1px; background: #e8edf3; }
+                                    item-keys := FocusScope { key-pressed(event) => { if event.text == Key.Return || event.text == " " { root.remove_pending = false; root.select_model(item.id); return accept; } return reject; } }
+                                    hit := TouchArea { mouse-cursor: pointer; clicked => { item-keys.focus(); root.remove_pending = false; root.select_model(item.id); } }
+                                }
+                            }
+                        }
+                        Card { width: 300px;
+                            VerticalLayout { padding: 12px; spacing: 8px;
+                                Body { text: root.selected_id == "" ? (root.chinese ? "模型详情" : "Model details") : root.selected_name; font-size: 20px; font-weight: 600; color: #303030; wrap: word-wrap; }
+                                Rectangle { height: 1px; background: #e5e5e5; }
+                                details-scroll := ScrollView {
+                                    horizontal-stretch: 1;
+                                    vertical-stretch: 1;
+                                    vertical-scrollbar-policy: always-on;
+                                    mouse-drag-pan-enabled: true;
+                                    content-height: max(details-content.min-height + 80px, self.visible-height);
+                                    details-content := VerticalLayout { width: details-scroll.visible-width; padding-right: 16px; spacing: 8px;
+                                    if root.selected_id == "": Label { text: root.chinese ? "选择列表中的模型，查看详情并管理。" : "Select a model to view details and manage it."; wrap: word-wrap; }
+                                    if root.selected_id != "": VerticalLayout { spacing: 8px;
+                                        Label { text: root.selected_meta; wrap: word-wrap; }
+                                        Body { text: root.selected_path; color: #536174; font-size: 14px; wrap: word-wrap; }
+                                        if root.selected_issue != "" && root.selected_issue != root.dismissed_issue: HorizontalLayout { spacing: 6px;
+                                            Body { horizontal-stretch: 1; text: root.selected_issue; color: #996600; font-size: 14px; wrap: word-wrap; }
+                                            Action { text: "×"; danger: true; clicked => { root.dismissed_issue = root.selected_issue; } }
+                                        }
+                                        Label { text: root.device_label; }
+                                        ComboBox { height: 38px; model: root.device_items; current-value <=> root.device_name; enabled: !root.operation_busy; }
+                                        Action { text: root.load_model_label; primary: true; enabled: !root.operation_busy && !root.api_server_running && !root.api_server_transition && root.selected_runnable; clicked => { root.load_model(root.selected_path, root.device_name); } }
+                                        Action { text: root.chinese ? "设为默认模型" : "Set as default"; enabled: !root.operation_busy; clicked => { root.default_model(root.selected_id); } }
+                                        Rectangle { height: 1px; background: #e5e5e5; }
+                                        Label { text: root.chinese ? "显示名称" : "Display name"; }
+                                        Input { text <=> root.rename_text; enabled: !root.operation_busy; }
+                                        if !root.remove_pending: HorizontalLayout { spacing: 8px;
+                                            Action { horizontal-stretch: 1; text: root.chinese ? "保存名称" : "Save name"; enabled: !root.operation_busy; clicked => { root.rename_model(root.selected_id, root.rename_text); } }
+                                            Action { text: root.chinese ? "移除" : "Remove"; danger: true; enabled: !root.operation_busy; clicked => { root.remove_pending = true; } }
+                                        }
+                                        if root.remove_pending: VerticalLayout { spacing: 8px;
+                                            Label { text: root.chinese ? "仅移除模型库记录，模型文件保留。" : "Removes the library entry; model files are kept."; wrap: word-wrap; }
+                                            HorizontalLayout { spacing: 8px;
+                                                Action { text: root.chinese ? "确认移除" : "Remove"; danger: true; enabled: !root.operation_busy; clicked => { root.remove_model(root.selected_id); root.remove_pending = false; } }
+                                                Action { text: root.cancel_label; clicked => { root.remove_pending = false; } }
+                                            }
+                                        }
+                                    }
+                                } }
+                            }
+                        }
+                    }
+                }
+                if root.active_page == "playground": Rectangle {
+                    vertical-stretch: 1; background: transparent;
+                    HorizontalLayout {
+                        x: (parent.width - self.width) / 2; y: 12px;
+                        width: min(760px, parent.width - 48px); height: 38px; spacing: 8px;
+                        Text { width: 120px; text: "解码 / Decoding"; color: #536277; font-size: 15px; vertical-alignment: center; }
+                        ComboBox {
+                            width: 340px; height: 38px;
+                            model: [
+                                "温度采样 / Temperature Sampling",
+                                "束搜索 / Beam Search",
+                                "Top-k 采样 / Top-k Sampling",
+                                "Top-p 核采样 / Top-p / Nucleus Sampling",
+                                "典型采样 / Typical Sampling [Unavailable]",
+                                "对比搜索 / Contrastive Search [Unavailable]",
+                                "多样化束搜索 / Diverse Beam Search",
+                                "Mirostat / Mirostat [Unavailable]",
+                                "贪心解码 / Greedy Decoding"
+                            ];
+                            current-index <=> root.decoding_index;
+                            selected(value) => {
+                                root.decoding_index = self.current-index;
+                                root.decoding_value_text = self.current-index == 0 ? "0.8" :
+                                    self.current-index == 1 || self.current-index == 6 ? "4" :
+                                    self.current-index == 2 ? "40" : self.current-index == 3 ? "0.95" :
+                                    self.current-index == 4 ? "0.95" : self.current-index == 5 ? "0.6" : "5";
+                            }
+                        }
+                        if root.decoding_index == 0 || root.decoding_index == 1 || root.decoding_index == 2 || root.decoding_index == 3 || root.decoding_index == 6: Text {
+                            width: 94px;
+                            text: root.decoding_index == 0 ? "温度 / Temp" :
+                                root.decoding_index == 1 || root.decoding_index == 6 ? "光束 / Beams" :
+                                root.decoding_index == 2 ? "K 值 / K" : "P 值 / P";
+                            color: #536277; font-size: 14px; vertical-alignment: center;
+                        }
+                        if root.decoding_index == 0 || root.decoding_index == 1 || root.decoding_index == 2 || root.decoding_index == 3 || root.decoding_index == 6: Input {
+                            width: 82px; height: 38px; text <=> root.decoding_value_text; enabled: !root.operation_busy;
+                        }
+                    }
+                    if root.decoding_index == 4 || root.decoding_index == 5 || root.decoding_index == 7: Text {
+                        x: (parent.width - min(760px, parent.width - 48px)) / 2; y: 56px;
+                        width: min(760px, parent.width - 48px); height: 24px;
+                        text: "当前 OpenVINO GenAI 后端暂不支持此算法 / This OpenVINO GenAI backend does not support this algorithm";
+                        color: #996600; font-size: 14px; vertical-alignment: center;
+                    }
+                    ChatHistory {
+                        x: (parent.width - self.width) / 2;
+                        y: root.decoding_index == 4 || root.decoding_index == 5 || root.decoding_index == 7 ? 92px : 56px;
+                        width: min(760px, parent.width - 48px);
+                        height: max(0px, composer.y - (root.decoding_index == 4 || root.decoding_index == 5 || root.decoding_index == 7 ? 104px : 68px));
+                        visible: root.chat_messages.length > 0;
+                        messages: root.chat_messages;
+                        chinese: root.chinese;
+                        can-remember-exchange: root.can_remember_exchange;
+                        operation-busy: root.operation_busy;
+                        remember-exchange => { root.remember_exchange(); }
+                    }
+                    composer := Rectangle {
+                        x: (parent.width - self.width) / 2;
+                        y: root.chat_messages.length == 0 ? max(70px, (parent.height - self.height) * 0.46) : parent.height - self.height - 16px;
+                        width: min(760px, parent.width - 48px); height: 186px + prompt-area.height - 58px;
+                        VerticalLayout { spacing: 16px;
+                            HorizontalLayout { height: 38px; spacing: 8px;
+                                Text { text: root.model_loaded ? root.loaded_name + "  ·  " + root.loaded_model_info : (root.chinese ? "新对话" : "New conversation"); horizontal-stretch: 1; min-width: 0px; color: #536277; font-size: 14px; vertical-alignment: center; overflow: elide; }
+                                Rectangle { horizontal-stretch: 1; }
+                                if root.model_loaded: Action { text: root.chinese ? "卸载模型" : "Unload"; enabled: !root.operation_busy && !root.api_server_running && !root.api_server_transition; clicked => { root.unload_model(); } }
+                                if root.last_prompt != "": Action { text: root.chinese ? "新对话" : "New chat"; enabled: !root.operation_busy; clicked => { root.clear_response(); } }
+                            }
+                            Rectangle { border-radius: 16px; border-width: 1px; border-color: #dedede; background: #ffffff;
+                                VerticalLayout { padding: 12px; spacing: 10px;
+                                    prompt-area := Rectangle { height: min(180px, max(58px, (root.prompt_line_count - 2) * 22px + 58px)); background: transparent;
+                                        if root.prompt_text == "": Text { x: 12px; y: 10px; width: parent.width - 24px; height: 24px; horizontal-alignment: left; vertical-alignment: top; text: root.chinese ? "输入问题，Enter 发送 · Shift+Enter 换行" : "Ask anything · Enter to send · Shift+Enter for a newline"; color: #888888; font-size: 15px; }
+                                        FocusScope {
+                                            x: 0px; y: 0px; width: parent.width; height: parent.height;
+                                            capture-key-pressed(event) => {
+                                                if event.text == Key.Return && !event.modifiers.shift {
+                                                    if root.model_loaded && !root.operation_busy && root.prompt_text != "" && root.decoding_index != 4 && root.decoding_index != 5 && root.decoding_index != 7 {
+                                                        root.generate_text(root.prompt_text, root.max_tokens_text, root.decoding_index, root.decoding_value_text);
+                                                    }
+                                                    return accept;
+                                                }
+                                                return reject;
+                                            }
+                                            prompt-editor := TextEdit { x: 12px; y: 8px; width: parent.width - 24px; height: parent.height - 16px; text <=> root.prompt_text; enabled: !root.operation_busy; font-size: 16px; wrap: word-wrap; edited(value) => { root.update_prompt_lines(value); } }
+                                        }
+                                    }
+                                    HorizontalLayout { height: 38px; spacing: 8px;
+                                        Action { text: "+"; enabled: !root.operation_busy; clicked => { root.active_page = "models"; root.browse_folder(); } }
+                                        if root.chat_model_items.length > 0: ComboBox {
+                                            width: 240px; height: 38px; model: root.chat_model_items; current-index <=> root.chat_model_index;
+                                            enabled: !root.operation_busy;
+                                            selected(value) => { root.choose_chat_model(self.current-index); }
+                                        }
+                                        if root.chat_model_items.length == 0: Action { text: root.chinese ? "选择模型" : "Choose model"; clicked => { root.active_page = "models"; } }
+                                        if root.chat_model_items.length > 0 && !root.model_loaded: Action { text: root.chinese ? "加载" : "Load"; enabled: !root.operation_busy && !root.api_server_running && !root.api_server_transition && root.chat_model_index >= 0; clicked => { root.choose_chat_model(root.chat_model_index); } }
+                                        Rectangle { horizontal-stretch: 1; }
+                                        Input { width: 80px; text <=> root.max_tokens_text; enabled: !root.operation_busy; }
+                                        if root.generating: Action { text: root.chinese ? "停止" : "Stop"; clicked => { root.cancel_generation(); } }
+                                        if !root.generating: Action { text: "↑"; primary: true; enabled: root.model_loaded && !root.operation_busy && root.prompt_text != "" && root.decoding_index != 4 && root.decoding_index != 5 && root.decoding_index != 7; clicked => { root.generate_text(root.prompt_text, root.max_tokens_text, root.decoding_index, root.decoding_value_text); } }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                if root.active_page == "overview": VerticalLayout { spacing: 20px;
+                    Rectangle { height: 190px; border-radius: 20px; background: #e8f0fe;
+                        VerticalLayout { padding: 26px; spacing: 12px;
+                            Body { text: root.chinese ? "你的模型，你的工作空间。" : "Your models. Your workspace."; color: #163a70; font-size: 28px; font-weight: 600; }
+                            Label { text: root.chinese ? "在本机发现模型、选择设备，开始一次对话。" : "Discover models, choose a device, and start a conversation locally."; font-size: 16px; }
+                            HorizontalLayout { height: 38px; Action { text: root.chinese ? "打开模型库" : "Open model library"; primary: true; clicked => { root.active_page = "models"; } } Rectangle { horizontal-stretch: 1; } }
+                        }
+                    }
+                    HorizontalLayout { height: 126px; spacing: 18px;
+                        Card { VerticalLayout { padding: 24px; spacing: 8px; Label { text: root.chinese ? "已发现模型" : "Models in library"; } Body { text: "" + root.model_count; height: 46px; color: #0b57d0; font-size: 34px; font-weight: 600; } } }
+                        Card { VerticalLayout { padding: 24px; spacing: 8px; Label { text: root.chinese ? "可用计算设备" : "Available devices"; } Body { text: "" + root.device_count; height: 46px; color: #188038; font-size: 34px; font-weight: 600; } } }
+                    }
+                    Card { VerticalLayout { padding: 24px; spacing: 12px;
+                        Body { text: root.chinese ? "当前模型" : "Current model"; color: #353535; font-size: 20px; font-weight: 600; }
+                        Label { text: root.model_loaded ? root.loaded_name + " · " + root.loaded_device : (root.chinese ? "尚未加载模型" : "No model loaded"); font-size: 17px; }
+                        Rectangle { vertical-stretch: 1; }
+                    } }
+                }
+                if root.active_page == "memory": VerticalLayout { spacing: 16px;
+                    Card { height: 174px;
+                        VerticalLayout { padding: 20px; spacing: 12px;
+                            Body { text: root.chinese ? "上下文设置" : "Context settings"; font-size: 18px; font-weight: 600; color: #353535; }
+                            HorizontalLayout { height: 40px; spacing: 12px;
+                                Label { text: root.chinese ? "上下文上限（词元）" : "Context limit (tokens)"; }
+                                Input { width: 120px; text <=> root.context_tokens_text; enabled: !root.operation_busy; }
+                                Action { text: root.chinese ? "应用" : "Apply"; enabled: !root.operation_busy; clicked => { root.update_context(root.context_tokens_text, root.context_memories_enabled, root.session_memory_enabled); } }
+                                Rectangle { horizontal-stretch: 1; }
+                                Label { text: root.context_status; horizontal-stretch: 2; wrap: word-wrap; }
+                            }
+                            HorizontalLayout { height: 32px; spacing: 22px;
+                                CheckBox { text: root.chinese ? "在回答中引用已保存记忆" : "Use saved memories in answers"; checked <=> root.context_memories_enabled; enabled: root.memory_ready && !root.operation_busy; toggled => { root.update_context(root.context_tokens_text, self.checked, root.session_memory_enabled); } }
+                                CheckBox { text: root.chinese ? "允许本次运行的临时记忆" : "Allow session-only memories"; checked <=> root.session_memory_enabled; enabled: root.memory_ready && !root.operation_busy; toggled => { root.update_context(root.context_tokens_text, root.context_memories_enabled, self.checked); } }
+                            }
+                        }
+                    }
+                    HorizontalLayout { vertical-stretch: 1; spacing: 16px;
+                        Card { width: 390px;
+                            VerticalLayout { padding: 16px; spacing: 10px;
+                                HorizontalLayout { height: 38px; spacing: 8px;
+                                    Body { text: root.chinese ? "已保存记忆" : "Saved memories"; font-size: 18px; font-weight: 600; color: #353535; }
+                                    Rectangle { horizontal-stretch: 1; }
+                                    Action { text: root.chinese ? "新建" : "New"; enabled: root.memory_ready && !root.operation_busy; clicked => { root.selected_memory_id = ""; root.selected_memory_pinned = false; root.memory_content = ""; root.memory_tags = ""; root.session_memory_scope = false; root.memory_remove_pending = false; } }
+                                }
+                                Input { text <=> root.memory_query; placeholder: root.chinese ? "搜索记忆内容或标签" : "Search memory text or tags"; edited(value) => { root.search_memories(value); } }
+                                if root.memory_items.length == 0: VerticalLayout { spacing: 10px;
+                                    Body { text: root.memory_ready ? (root.chinese ? "还没有保存的记忆" : "No saved memories yet") : root.memory_status; font-size: 17px; font-weight: 600; color: #353535; }
+                                    Label { text: root.memory_ready ? (root.chinese ? "把常用偏好或项目背景写在右侧，保存后会在相关对话中提供给模型。" : "Add a preference or project detail on the right. It can be used in relevant conversations after saving.") : root.memory_status; wrap: word-wrap; }
+                                }
+                                ListView { vertical-stretch: 1;
+                                    for item in root.memory_items: Rectangle { height: 100px; background: root.selected_memory_id == item.id ? #e8f0fe : memory-hit.has-hover ? #f5f8fc : white;
+                                        VerticalLayout { padding: 12px; spacing: 5px;
+                                            Text { text: item.pinned ? (root.chinese ? "固定 · " : "Pinned · ") + item.content : item.content; color: #30343b; font-size: 15px; overflow: elide; wrap: word-wrap; }
+                                            Label { text: (item.scope == "session" ? (root.chinese ? "仅本次运行" : "This run only") : (root.chinese ? "长期记忆" : "Persistent")) + (item.tags == "" ? "" : "  ·  " + item.tags); font-size: 13px; overflow: elide; }
+                                        }
+                                        memory-hit := TouchArea { mouse-cursor: pointer; clicked => { root.select_memory(item.id); } }
+                                        Rectangle { y: parent.height - 1px; height: 1px; background: #edf0f3; }
+                                    }
+                                }
+                            }
+                        }
+                        Card { horizontal-stretch: 1;
+                            ScrollView { VerticalLayout { padding: 20px; spacing: 12px;
+                                Body { text: root.selected_memory_id == "" ? (root.chinese ? "添加一条记忆" : "Add a memory") : (root.chinese ? "编辑记忆" : "Edit memory"); font-size: 18px; font-weight: 600; color: #353535; }
+                                Label { text: root.chinese ? "只保存你主动填写的信息。已保存内容可能作为相关提示的一部分发送给本机模型。" : "Only information you enter is saved. Relevant saved notes may be included in prompts sent to your local model."; wrap: word-wrap; }
+                                TextEdit { height: 180px; text <=> root.memory_content; font-size: 15px; wrap: word-wrap; }
+                                Label { text: root.chinese ? "标签（用逗号分隔）" : "Tags (comma separated)"; }
+                                Input { text <=> root.memory_tags; placeholder: root.chinese ? "例如：偏好、项目" : "e.g. preferences, project"; }
+                                CheckBox { text: root.chinese ? "临时记忆（退出程序时删除）" : "Session-only (deleted when the app exits)"; checked <=> root.session_memory_scope; enabled: root.selected_memory_id == ""; }
+                                Label { text: root.memory_location; font-size: 13px; wrap: word-wrap; }
+                                Label { text: root.memory_status; color: #657080; wrap: word-wrap; }
+                                HorizontalLayout { height: 38px; spacing: 8px;
+                                    Action { text: root.chinese ? "保存记忆" : "Save memory"; primary: true; enabled: root.memory_ready && !root.operation_busy && root.memory_content != ""; clicked => { root.save_memory(root.memory_content, root.memory_tags, root.session_memory_scope); } }
+                                    if root.selected_memory_id != "": Action { text: root.selected_memory_pinned ? (root.chinese ? "取消固定" : "Unpin") : (root.chinese ? "固定" : "Pin"); enabled: root.memory_ready && !root.operation_busy; clicked => { root.pin_memory(root.selected_memory_id, !root.selected_memory_pinned); } }
+                                    if root.selected_memory_id != "" && !root.memory_remove_pending: Action { text: root.chinese ? "删除" : "Delete"; danger: true; enabled: !root.operation_busy; clicked => { root.memory_remove_pending = true; } }
+                                    if root.memory_remove_pending: Action { text: root.chinese ? "确认删除" : "Confirm delete"; danger: true; enabled: !root.operation_busy; clicked => { root.remove_memory(root.selected_memory_id); root.memory_remove_pending = false; } }
+                                    if root.memory_remove_pending: Action { text: root.chinese ? "取消" : "Cancel"; clicked => { root.memory_remove_pending = false; } }
+                                }
+                                Rectangle { vertical-stretch: 1; }
+                            } }
+                        }
+                    }
+                }
+                if root.active_page == "devices": Card {
+                    VerticalLayout { padding: 26px; spacing: 20px;
+                        HorizontalLayout { height: 38px; Text { text: root.device_list_label; font-size: 20px; font-weight: 600; color: #353535; vertical-alignment: center; } Rectangle { horizontal-stretch: 1; } Action { text: root.refresh_devices_label; enabled: !root.operation_busy; clicked => { root.refresh_devices(); } } }
+                        Rectangle { height: 32px; background: #f6f7f9; border-radius: 4px;
+                            HorizontalLayout { padding-left: 12px; padding-right: 12px; spacing: 20px;
+                                Text { width: 100px; text: root.chinese ? "设备" : "Device"; color: #657080; font-size: 14px; vertical-alignment: center; }
+                                Text { text: root.chinese ? "名称" : "Name"; color: #657080; font-size: 14px; vertical-alignment: center; }
+                            }
+                        }
+                        ListView { height: min(320px, root.device_count * 64px); vertical-stretch: 0;
+                            for device in root.device_rows: Rectangle { height: 64px;
+                                HorizontalLayout { padding-left: 12px; padding-right: 12px; spacing: 20px;
+                                    Text { width: 100px; text: device.id; color: #35455c; font-size: 16px; vertical-alignment: center; }
+                                    Text { text: device.name; color: #35455c; font-size: 16px; vertical-alignment: center; wrap: word-wrap; }
+                                }
+                                Rectangle { y: parent.height - 1px; height: 1px; background: #edf0f3; }
+                            }
+                        }
+                        if root.device_count == 0: Label { text: root.device_list_text; wrap: word-wrap; }
+                        Label { text: root.chinese ? "加载模型时选择计算设备。" : "Choose a compute device when loading a model."; wrap: word-wrap; }
+                        Rectangle { vertical-stretch: 1; }
+                    }
+                }
+                if root.active_page == "api": ScrollView { vertical-stretch: 1;
+                    VerticalLayout { spacing: 16px;
+                    Card {
+                        VerticalLayout { padding: 24px; spacing: 18px;
+                            HorizontalLayout { height: 36px; spacing: 10px;
+                                Rectangle { width: 10px; height: 10px; border-radius: 5px; background: root.api_server_running ? #188038 : #9aa3af; y: (parent.height - self.height) / 2; }
+                                Body { text: root.api_server_transition ? (root.chinese ? "正在关闭服务…" : "Stopping server…") : root.api_server_running ? (root.chinese ? "服务正在运行" : "Server is running") : (root.chinese ? "服务已停止" : "Server is stopped"); font-size: 17px; font-weight: 600; }
+                                Rectangle { horizontal-stretch: 1; }
+                                Action { text: root.api_server_running ? (root.chinese ? "停止服务" : "Stop server") : (root.chinese ? "启动服务" : "Start server"); primary: !root.api_server_running; danger: root.api_server_running; enabled: !root.api_server_transition && (root.api_server_running || (root.model_loaded && !root.operation_busy)); clicked => { root.toggle_api_server(root.api_host, root.api_port, root.api_key); } }
+                            }
+                            Rectangle { height: 1px; background: #e7ebf0; }
+                            VerticalLayout { spacing: 8px;
+                                Label { text: root.chinese ? "当前服务模型" : "Model served"; }
+                                Body { text: root.api_model_info != "" ? root.api_model_info : (root.chinese ? "请先在对话页加载一个模型" : "Load a model in Chat before starting the server"); color: root.api_model_info != "" ? #35455c : #788394; wrap: word-wrap; }
+                            }
+                            HorizontalLayout { spacing: 16px;
+                                VerticalLayout { horizontal-stretch: 1; spacing: 8px;
+                                    Label { text: root.chinese ? "监听地址" : "Host"; }
+                                    Input { text <=> root.api_host; placeholder: "127.0.0.1"; enabled: !root.api_server_running && !root.api_server_transition; }
+                                }
+                                VerticalLayout { width: 180px; spacing: 8px;
+                                    Label { text: root.chinese ? "端口" : "Port"; }
+                                    Input { text <=> root.api_port; placeholder: "1234"; enabled: !root.api_server_running && !root.api_server_transition; }
+                                }
+                            }
+                            VerticalLayout { spacing: 8px;
+                                Label { text: root.chinese ? "API 密钥（可选）" : "API key (optional)"; }
+                                HorizontalLayout { spacing: 8px;
+                                    Input { horizontal-stretch: 1; text <=> root.api_key; password: root.api_key_hidden; placeholder: root.chinese ? "留空时仅供本机访问" : "Leave blank for local-only access"; enabled: !root.api_server_running && !root.api_server_transition; }
+                                    Action { text: root.api_key_hidden ? (root.chinese ? "显示" : "Show") : (root.chinese ? "隐藏" : "Hide"); enabled: !root.api_server_running && !root.api_server_transition; clicked => { root.api_key_hidden = !root.api_key_hidden; } }
+                                    Action { text: root.chinese ? "生成随机密钥" : "Generate key"; enabled: !root.api_server_running && !root.api_server_transition; clicked => { root.generate_api_key(); } }
+                                }
+                                VerticalLayout { spacing: 8px;
+                                    Label { text: root.chinese ? "密钥库" : "Key vault"; }
+                                    Label { text: root.chinese ? "密钥由 Windows 凭据管理器加密保存在当前用户下。" : "Keys are encrypted by Windows Credential Manager for this user."; font-size: 13px; }
+                                    HorizontalLayout { spacing: 8px;
+                                        ComboBox { horizontal-stretch: 1; height: 38px; model: root.api_key_names; current-value <=> root.api_key_name; enabled: root.api_key_names.length > 0 && !root.api_server_running && !root.api_server_transition; selected(value) => { root.select_api_key(value); } }
+                                        Action { text: root.chinese ? "删除已保存密钥" : "Delete saved key"; danger: true; enabled: root.api_key_name != "" && !root.api_server_running && !root.api_server_transition; clicked => { root.delete_api_key(root.api_key_name); } }
+                                    }
+                                    HorizontalLayout { spacing: 8px;
+                                        Input { horizontal-stretch: 1; text <=> root.api_key_label; placeholder: root.chinese ? "输入名称后保存当前密钥" : "Name this key to save it"; enabled: !root.api_server_running && !root.api_server_transition; }
+                                        Action { text: root.chinese ? "保存到密钥库" : "Save to vault"; enabled: root.api_key != "" && root.api_key_label != "" && !root.api_server_running && !root.api_server_transition; clicked => { root.save_api_key(root.api_key_label, root.api_key); } }
+                                    }
+                                }
+                                Label { text: root.chinese ? "监听非本机地址时必须设置密钥。HTTP 未加密，请只在可信网络中使用。" : "An API key is required for non-local addresses. HTTP is unencrypted; use only on trusted networks."; wrap: word-wrap; }
+                                Label { text: root.chinese ? "客户端可使用 Authorization: Bearer <密钥> 或 x-api-key。" : "Clients can send Authorization: Bearer <key> or x-api-key."; wrap: word-wrap; }
+                            }
+                        }
+                    }
+                    Card {
+                        VerticalLayout { padding: 24px; spacing: 14px;
+                            Body { text: root.chinese ? "服务地址" : "Server address"; font-size: 17px; font-weight: 600; }
+                            Body { text: "http://" + root.api_host + ":" + root.api_port; color: #35455c; font-size: 16px; }
+                            Rectangle { height: 1px; background: #e7ebf0; }
+                            Body { text: root.chinese ? "可用接口" : "Available endpoints"; font-size: 16px; font-weight: 600; }
+                            Label { text: "OpenAI  ·  /v1/chat/completions  ·  /v1/models"; wrap: word-wrap; }
+                            Label { text: "Anthropic  ·  /v1/messages"; wrap: word-wrap; }
+                            Label { text: "Isvik  ·  /api/v1/inference  ·  /api/v1/models  ·  /api/v1/health"; wrap: word-wrap; }
+                            Rectangle { vertical-stretch: 1; }
+                        }
+                    }
+                    }
+                }
+                if root.active_page == "about": Card {
+                    ScrollView { VerticalLayout { padding: 28px; spacing: 20px;
+                        Rectangle { height: 62px;
+                            Image { source: @image-url("../resources/isvik-lockup-black.png"); x: 0px; width: 220px; height: 62px; image-fit: contain; }
+                        }
+                        Body { text: "Isvik 0.1"; color: #353535; font-size: 24px; font-weight: 600; }
+                        Label { text: root.chinese ? "本地 AI 工作空间 · C++ / OpenVINO GenAI" : "Local AI workspace · C++ / OpenVINO GenAI"; font-size: 16px; }
+                        VerticalLayout { spacing: 6px;
+                            Label { text: root.chinese ? "模型库保存位置" : "Model catalog location"; }
+                            Body { text: root.catalog_location; color: #536174; wrap: word-wrap; font-size: 15px; }
+                        }
+                        Action {
+                            text: root.chinese ? "第三方许可证" : "Third-party licenses";
+                            clicked => { root.show_third_party_licenses = !root.show_third_party_licenses; }
+                        }
+                        if root.show_third_party_licenses: Rectangle {
+                            height: 172px;
+                            AboutSlint { x: 0px; width: 280px; height: 172px; }
+                        }
+                        Rectangle { min-height: 12px; vertical-stretch: 1; }
+                    } }
+                }
+                if root.status_message != "": Rectangle { height: root.show_details && root.error_detail != "" ? 146px : 52px; border-radius: 8px; background: root.status_error ? #fce8e6 : #f0f0f0;
+                    VerticalLayout { padding: 10px; spacing: 8px;
+                        HorizontalLayout { height: 32px; spacing: 10px;
+                            Text { text: root.status_message; color: root.status_error ? #a32620 : #3c506d; font-size: 15px; vertical-alignment: center; overflow: elide; }
+                            if root.error_detail != "": Action { height: 32px; text: root.chinese ? "详细信息" : "Details"; clicked => { root.show_details = !root.show_details; } }
+                        }
+                        if root.show_details && root.error_detail != "": TextEdit { text: root.error_detail; read-only: true; font-size: 14px; }
+                    }
+                }
+            }
+        }
+    }
+}

@@ -1,0 +1,10 @@
+add_library(isvik_openvino device_provider.cpp genai_engine.cpp)
+target_include_directories(isvik_openvino PUBLIC "${PROJECT_SOURCE_DIR}/include")
+target_compile_features(isvik_openvino PUBLIC cxx_std_20)
+target_link_libraries(isvik_openvino PUBLIC isvik_core openvino::runtime)
+
+if(MSVC)
+  target_compile_options(isvik_openvino PRIVATE /W4 /permissive-)
+else()
+  target_compile_options(isvik_openvino PRIVATE -Wall -Wextra -Wpedantic -Wconversion)
+endif()

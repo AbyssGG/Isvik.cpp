@@ -1,0 +1,18 @@
+.vs/
+x64/
+out/
+build/
+cmake-build-*/
+*.user
+*.suo
+*.VC.db
+*.VC.VC.opendb
+*.aps
+
+# Generated IDE files and local development notes
+*.sln
+*.slnx
+*.obj
+DEVLOG.md
+ENVIRONMENT.md
+Isvik.cpp开发计划.md

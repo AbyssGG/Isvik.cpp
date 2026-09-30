@@ -1,0 +1,123 @@
+{
+  "version": 6,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 21,
+    "patch": 0
+  },
+  "configurePresets": [
+    {
+      "name": "windows-msvc-base",
+      "hidden": true,
+      "generator": "Visual Studio 18 2026",
+      "binaryDir": "${sourceDir}/out/build/${presetName}",
+      "architecture": {
+        "value": "x64",
+        "strategy": "external"
+      },
+      "cacheVariables": {
+        "BUILD_TESTING": "ON",
+        "ISVIK_ENABLE_OPENVINO": "ON",
+        "ISVIK_ENABLE_TENSORRT": "ON"
+      },
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Windows"
+      }
+    },
+    {
+      "name": "windows-msvc",
+      "displayName": "Windows MSVC",
+      "inherits": "windows-msvc-base"
+    },
+    {
+      "name": "windows-msvc-debug",
+      "displayName": "Windows MSVC Debug",
+      "inherits": "windows-msvc-base"
+    },
+    {
+      "name": "windows-msvc-release",
+      "displayName": "Windows MSVC Release",
+      "inherits": "windows-msvc-base"
+    },
+    {
+      "name": "linux-gcc",
+      "displayName": "Linux GCC",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/out/build/${presetName}",
+      "cacheVariables": {
+        "CMAKE_CXX_COMPILER": "g++",
+        "CMAKE_BUILD_TYPE": "Debug",
+        "BUILD_TESTING": "ON",
+        "ISVIK_ENABLE_OPENVINO": "OFF"
+      },
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Linux"
+      }
+    },
+    {
+      "name": "linux-gcc-release",
+      "displayName": "Linux GCC Release",
+      "inherits": "linux-gcc",
+      "binaryDir": "${sourceDir}/out/build/${presetName}",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "windows-msvc-debug",
+      "configurePreset": "windows-msvc-debug",
+      "configuration": "Debug"
+    },
+    {
+      "name": "windows-msvc-release",
+      "configurePreset": "windows-msvc-release",
+      "configuration": "Release"
+    },
+    {
+      "name": "linux-gcc",
+      "configurePreset": "linux-gcc"
+    },
+    {
+      "name": "linux-gcc-release",
+      "configurePreset": "linux-gcc-release"
+    }
+  ],
+  "testPresets": [
+    {
+      "name": "windows-msvc-debug",
+      "configurePreset": "windows-msvc-debug",
+      "configuration": "Debug",
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
+      "name": "windows-msvc-release",
+      "configurePreset": "windows-msvc-release",
+      "configuration": "Release",
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
+      "name": "linux-gcc",
+      "configurePreset": "linux-gcc",
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
+      "name": "linux-gcc-release",
+      "configurePreset": "linux-gcc-release",
+      "output": {
+        "outputOnFailure": true
+      }
+    }
+  ]
+}

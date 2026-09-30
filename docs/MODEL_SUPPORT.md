@@ -20,6 +20,8 @@ The TensorRT backend provides named-tensor execution for supported ONNX networks
 
 The optional native TensorRT GGUF runtime reads supported Gemma 4 GGUF weights without rewriting the model. Runtime support depends on the model architecture and tensor encodings. Native GGUF inference can require substantial GPU memory and can be slower than optimized engines.
 
+See [how the TensorRT GGUF path works in source code](TENSORRT_GGUF.md) for its supported encodings, custom plugin, and current performance costs.
+
 ## Check a model
 
 Use the CLI to inspect a model before loading it:

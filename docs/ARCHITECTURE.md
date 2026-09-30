@@ -18,6 +18,8 @@ The application stores its model catalog and memory database in the user's local
 - ONNX Runtime GenAI loads compatible ONNX text-generation packages.
 - TensorRT supports named-tensor execution and the optional native Gemma 4 GGUF generation path.
 
+The [TensorRT GGUF source guide](TENSORRT_GGUF.md) traces the native GGUF reader, plugin, CUDA kernel, and decoding loop.
+
 CMake controls optional backend integrations. A build can omit runtimes that are unavailable on the host.
 
 ## Request flow

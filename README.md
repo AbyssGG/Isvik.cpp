@@ -1,109 +1,120 @@
 # Isvik.cpp
 
-Isvik.cpp is a C++20 desktop application and local runtime for running language models on your own hardware. It includes a chat interface, a command-line interface, model management, persistent memory, and an HTTP API.
+<p align="center">
+  <img src="resources/isvik-readme-banner.png" alt="Isvik logo on a dark banner" width="100%">
+</p>
 
-## Features
+<p align="center">
+  <strong>Built for OpenVINO and local AI on Intel AI PCs.</strong><br>
+  C++20 · Desktop chat · Interactive CLI · Local APIs · NVIDIA TensorRT
+</p>
 
-- Run supported OpenVINO IR and GGUF models with OpenVINO GenAI.
-- Run compatible ONNX Runtime GenAI models.
-- Use the optional NVIDIA TensorRT backend for ONNX engine execution and native Gemma 4 GGUF inference.
-- Select CPU, GPU, or NPU devices when the selected backend supports them.
-- Manage local models, conversation context, saved memories, and decoding settings.
-- Serve Isvik-native, OpenAI Chat Completions, and Anthropic Messages APIs.
-- Run without a cloud account or remote inference service.
+<p align="center">
+  <a href="docs/MODEL_SUPPORT.md"><img src="https://img.shields.io/badge/Backend-OpenVINO-0071C5?style=flat-square&amp;logo=intel&amp;logoColor=white" alt="OpenVINO"></a>
+  <a href="docs/BUILDING.md"><img src="https://img.shields.io/badge/C%2B%2B-20-00599C?style=flat-square&amp;logo=cplusplus&amp;logoColor=white" alt="C++20"></a>
+  <a href="docs/TENSORRT_GGUF.md"><img src="https://img.shields.io/badge/NVIDIA-TensorRT%20GGUF-76B900?style=flat-square&amp;logo=nvidia&amp;logoColor=white" alt="NVIDIA TensorRT GGUF"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-Apache%202.0-2E7D32?style=flat-square" alt="Apache 2.0 license"></a>
+  <a href="https://github.com/AbyssGG/Isvik.cpp/actions/workflows/ci.yml"><img src="https://github.com/AbyssGG/Isvik.cpp/actions/workflows/ci.yml/badge.svg" alt="Build status"></a>
+</p>
 
-Model support depends on the model architecture, tokenizer files, quantization, backend, and installed runtime. See [model support](docs/MODEL_SUPPORT.md) for details.
+<p align="center">
+  <strong>English</strong> | <a href="README.zh-CN.md">简体中文</a>
+</p>
+
+## What is Isvik.cpp?
+
+Isvik.cpp is a C++20 local AI runtime developed around OpenVINO for Intel AI PCs. It provides a desktop chat interface, a persistent bilingual CLI, a model library, saved memories, and a local API server. Inference runs on your hardware without a cloud account.
+
+## Built for OpenVINO on Intel AI PCs
+
+The project began with a practical goal: make OpenVINO language-model inference easy to use from a desktop app and a real terminal, then expose the same local model through an API. OpenVINO GenAI is the primary path for OpenVINO IR models and the GGUF models supported by the installed runtime. You can select CPU, Intel GPU, or NPU when the model and device support that combination.
+
+The model library, chat, CLI, and API share the same runtime services. This lets you inspect a model, choose a device, and use it in the interface that fits your workflow. See [model support](docs/MODEL_SUPPORT.md) for the exact compatibility limits.
+
+## Supported backends
+
+| Backend | Model input | Where it runs |
+| --- | --- | --- |
+| OpenVINO GenAI | OpenVINO IR and selected GGUF models | Supported CPU, GPU, or NPU devices |
+| ONNX Runtime GenAI | Compatible ONNX text-generation packages | Providers available in the build |
+| NVIDIA TensorRT | Supported Gemma 4 GGUF models through Isvik's native plugin | NVIDIA GPU |
+| TensorRT-RTX provider | Compatible ONNX Runtime GenAI packages | Supported NVIDIA GPU, with configured fallback |
+
+Model recognition does not guarantee inference support. Architecture, tensor encoding, tokenizer assets, installed SDKs, and the selected device all matter. See [model support](docs/MODEL_SUPPORT.md).
 
 ## Get started
 
-### Requirements
-
-- CMake 3.21 or later.
-- A C++20 compiler.
-- Git.
-- Internet access for the first CMake configure unless dependencies are available locally.
-- Windows with Visual Studio 2026, or Linux x86-64 with GCC and Ninja for the supplied presets.
-
-CMake downloads pinned third-party packages and verifies their hashes. OpenVINO, ONNX Runtime GenAI, and TensorRT are optional outside the supplied Windows presets.
-
 ### Build on Windows
 
-Run these commands from the repository root:
+Install Visual Studio 2026 with C++ support, CMake 3.21 or later, and Git. From the repository root, run:
 
-~~~powershell
+```powershell
 cmake --preset windows-msvc-release
 cmake --build --preset windows-msvc-release --target Isvik --parallel
-~~~
+./out/build/windows-msvc-release/Release/Isvik.exe
+```
 
-Launch the desktop application:
-
-~~~powershell
-.\out\build\windows-msvc-release\Release\Isvik.exe
-~~~
-
-The CMake project is named Isvik.cpp. The desktop executable is named Isvik.exe.
+The project is named Isvik.cpp; the executable is named `Isvik.exe`. The Windows preset enables optional backends when their SDKs are available. See the [build guide](docs/BUILDING.md) for other configurations.
 
 ### Build on Linux
 
-Use a recent GCC toolchain with C++20 support:
+Use a C++20 GCC toolchain and Ninja:
 
-~~~sh
+```sh
 cmake --preset linux-gcc-release
 cmake --build --preset linux-gcc-release --parallel
-~~~
+```
 
-The Linux preset disables OpenVINO by default. Configure the OpenVINO integration separately when its SDK is available.
+The supplied Linux preset disables OpenVINO by default. Configure optional backends with their SDKs before using them.
 
-## Run a model
+## Use the interactive CLI
 
-Use a model path supported by the selected backend. For example:
+On Windows, start the terminal workbench directly:
 
-~~~powershell
-.\out\build\windows-msvc-release\Release\Isvik.exe --run --model "D:\Models\openvino-model" --device CPU --prompt "Explain local inference." --max-tokens 64
-~~~
+```powershell
+./out/build/windows-msvc-release/Release/Isvik.exe -cli
+```
 
-Start the bilingual, persistent CLI workbench. It stays in the console as a real REPL (no desktop window), with an ASCII banner, a compact imported-model table, and a `isvik[model@device]>` prompt. Chat, switch models, and manage the catalog without leaving the prompt:
+The prompt stays open for chat and model management. Enter `-ls` to list imported models, a model number to select one, and `-params` to inspect the active settings. Each completed reply reports input tokens, output tokens, elapsed time, and tokens per second. Use `-lang zh` or `-lang en` to switch language, and `-exit` to quit. Run `Isvik.exe --help` for all commands.
 
-~~~powershell
-.\out\build\windows-msvc-release\Release\Isvik.exe -cli
-~~~
+To run a single prompt:
 
-On Windows, `Isvik -cli` (or `Isvik --cli`) starts this workbench directly. At the prompt, `-ls` prints imported models with size and supported devices. Enter a model number to load or switch, or run `-use NUMBER|ID`. Each completed reply reports input/output tokens, elapsed time, and generation speed in tok/s. Use `-params` to show the active runtime and generation parameters; `-info [ID]` shows model metadata. Other commands include `-stop`, `-backend openvino|onnxruntime|tensorrt`, `-devices`, `-import PATH`, `-rm NUMBER|ID`, `-new`, `-history`, `-system TEXT`, `-key list|create|show|revoke`, and `-serve`. Use `-lang en` or `-lang zh` to change and save the CLI language. `/new`, `/history`, `/memory`, and `/context` are also accepted. Use `-exit` to quit. To start with a specific model, use `Isvik -cli --model "D:\Models\openvino-model" --device CPU`. See `Isvik.exe --help` for bilingual command-line options.
+```powershell
+./out/build/windows-msvc-release/Release/Isvik.exe --run --model "<path-to-model>" --device CPU --prompt "Explain local inference." --max-tokens 64
+```
 
-## Start the API server
+Choose a backend and device supported by your model. The [model support guide](docs/MODEL_SUPPORT.md) explains the available combinations.
 
-Start one loaded model as a local service:
+## Start the local API
 
-~~~powershell
-.\out\build\windows-msvc-release\Release\Isvik.exe --server --model "D:\Models\openvino-model" --backend openvino
-~~~
+```powershell
+./out/build/windows-msvc-release/Release/Isvik.exe --server --model "<path-to-model>" --backend openvino
+```
 
-The default address is `http://127.0.0.1:1234`. Isvik.cpp supports Isvik-native endpoints, OpenAI Chat Completions, and Anthropic Messages. See the [API guide](docs/API.md) for request formats, streaming, and authentication.
+The default address is `http://127.0.0.1:1234`. The server exposes Isvik-native endpoints, OpenAI Chat Completions, and Anthropic Messages. See the [API guide](docs/API.md) for endpoints, streaming, and authentication.
 
-## Run tests
+## How TensorRT runs GGUF
 
-Configure and build the test targets, then run CTest:
+The native TensorRT path reads a supported Gemma 4 GGUF file in place. Isvik parses its metadata, uses its embedded BPE tokenizer, and reads packed tensor blocks from the original file. A custom TensorRT `IPluginV3` passes those packed bytes to CUDA matrix-vector kernels. Isvik's C++ runtime handles the remaining decoding steps, including attention and the KV cache.
 
-~~~powershell
-cmake --preset windows-msvc-release
-cmake --build --preset windows-msvc-release --parallel
-ctest --preset windows-msvc-release
-~~~
+This path does not require a GGUF-to-ONNX conversion. TensorRT engines for the custom operation are cached separately; the GGUF model file is not rewritten. Current support is limited to Gemma 4 text models with supported tensor encodings, and this implementation can be slow because it repeatedly reads weights and moves data between host and GPU.
 
-For Linux, use the `linux-gcc-release` preset with the same build and test commands.
+Read the [TensorRT GGUF source guide](docs/TENSORRT_GGUF.md) for the exact source files, data flow, supported encodings, and a run command.
 
 ## Documentation
 
-- [Build guide](docs/BUILDING.md)
-- [Model support](docs/MODEL_SUPPORT.md)
-- [API guide](docs/API.md)
-- [Architecture](docs/ARCHITECTURE.md)
-- [Contribution guide](CONTRIBUTING.md)
-- [Code of conduct](CODE_OF_CONDUCT.md)
-- [Security policy](SECURITY.md)
-- [Documentation style guide](docs/STYLE_GUIDE.md)
-- [Third-party notices](THIRD_PARTY_NOTICES.md)
+| Guide | Description |
+| --- | --- |
+| [Build Isvik.cpp](docs/BUILDING.md) | Requirements, presets, and optional backends |
+| [Model support](docs/MODEL_SUPPORT.md) | Formats, backends, and limitations |
+| [TensorRT GGUF source guide](docs/TENSORRT_GGUF.md) | How the native GGUF path works in source code |
+| [API guide](docs/API.md) | Isvik, OpenAI, and Anthropic endpoints |
+| [Architecture](docs/ARCHITECTURE.md) | Application, core, and backend layers |
+| [Contributing](CONTRIBUTING.md) | How to contribute |
+| [Documentation style](docs/STYLE_GUIDE.md) | Writing and C++ style conventions |
+
+See the [code of conduct](CODE_OF_CONDUCT.md), [security policy](SECURITY.md), and [third-party notices](THIRD_PARTY_NOTICES.md).
 
 ## License
 
-Isvik.cpp is licensed under the Apache License, Version 2.0. See [LICENSE](LICENSE). Third-party dependencies have separate notices and license terms.
+Isvik.cpp is licensed under the [Apache License 2.0](LICENSE). Third-party dependencies retain their own license terms.

@@ -24,6 +24,8 @@ The Debug preset is `windows-msvc-debug`. Build the `Isvik` target to compile th
 
 ## Configure and build on Linux
 
+Linux support has not been validated. The commands below are provisional, and the desktop app and inference backends have not been confirmed to run on Linux.
+
 ~~~sh
 cmake --preset linux-gcc-release
 cmake --build --preset linux-gcc-release --parallel

@@ -74,6 +74,8 @@ cmake --build --preset windows-msvc-release --target Isvik --parallel
 
 ### 在 Linux 上构建
 
+**Linux 支持尚未完成验证。** 以下构建命令仅供参考；桌面程序、OpenVINO 推理和其他可选后端尚未确认能在 Linux 上正常运行。
+
 使用支持 C++20 的 GCC 和 Ninja：
 
 ```sh

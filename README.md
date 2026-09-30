@@ -74,6 +74,8 @@ The project is named Isvik.cpp; the executable is named `Isvik.exe`. The Windows
 
 ### Build on Linux
 
+**Linux support has not been validated.** The following build commands are provisional; the desktop app, OpenVINO inference, and optional backends have not been confirmed to work on Linux.
+
 Use a C++20 GCC toolchain and Ninja:
 
 ```sh

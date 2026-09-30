@@ -1,7 +1,7 @@
 # Isvik.cpp
 
 <p align="center">
-  <img src="resources/isvik-readme-banner.png" alt="Isvik logo on a dark banner" width="100%">
+  <img src="resources/isvik-cpp-banner.png" alt="Isvik.cpp logo on a dark banner" width="100%">
 </p>
 
 <p align="center">
@@ -10,7 +10,8 @@
 </p>
 
 <p align="center">
-  <a href="docs/MODEL_SUPPORT.md"><img src="https://img.shields.io/badge/Backend-OpenVINO-0071C5?style=flat-square&amp;logo=intel&amp;logoColor=white" alt="OpenVINO"></a>
+  <a href="CMakeLists.txt"><img src="https://img.shields.io/badge/version-0.1.0-1a73e8?style=flat-square" alt="Isvik.cpp source version 0.1.0"></a>
+  <a href="docs/MODEL_SUPPORT.md"><img src="https://img.shields.io/badge/OpenVINO%20GenAI-2026.4.0.0-0071C5?style=flat-square&amp;logo=intel&amp;logoColor=white" alt="OpenVINO GenAI 2026.4.0.0"></a>
   <a href="docs/BUILDING.md"><img src="https://img.shields.io/badge/C%2B%2B-20-00599C?style=flat-square&amp;logo=cplusplus&amp;logoColor=white" alt="C++20"></a>
   <a href="docs/TENSORRT_GGUF.md"><img src="https://img.shields.io/badge/NVIDIA-TensorRT%20GGUF-76B900?style=flat-square&amp;logo=nvidia&amp;logoColor=white" alt="NVIDIA TensorRT GGUF"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-Apache%202.0-2E7D32?style=flat-square" alt="Apache 2.0 license"></a>
@@ -41,6 +42,21 @@ The model library, chat, CLI, and API share the same runtime services. This lets
 | TensorRT-RTX provider | Compatible ONNX Runtime GenAI packages | Supported NVIDIA GPU, with configured fallback |
 
 Model recognition does not guarantee inference support. Architecture, tensor encoding, tokenizer assets, installed SDKs, and the selected device all matter. See [model support](docs/MODEL_SUPPORT.md).
+
+## Versions
+
+**Isvik.cpp is at source version 0.1.0**, as set in [CMake](CMakeLists.txt) and the Windows executable resource. This identifies the current source; no binary GitHub release has been published yet.
+
+| Component | Version used by this repository |
+| --- | --- |
+| OpenVINO GenAI and its bundled runtime (Windows) | `2026.4.0.0` |
+| ONNX Runtime GenAI (Windows) | `0.17.0` |
+| ONNX Runtime (Windows) | `1.26.0` |
+| Slint C++ | `1.18.1` |
+| TensorRT-RTX execution provider ABI (optional, Windows) | `0.4.2` |
+| TensorRT SDK and CUDA Toolkit (optional) | Versions from the local installation; no fixed patch version |
+
+The pinned package values come from the [CMake integration files](cmake/). A backend is included only when its required SDK is available in the selected build.
 
 ## Get started
 

@@ -1,7 +1,7 @@
 # Isvik.cpp
 
 <p align="center">
-  <img src="resources/isvik-readme-banner.png" alt="深色背景上的 Isvik 标志" width="100%">
+  <img src="resources/isvik-cpp-banner.png" alt="深色背景上的 Isvik.cpp 标志" width="100%">
 </p>
 
 <p align="center">
@@ -10,7 +10,8 @@
 </p>
 
 <p align="center">
-  <a href="docs/MODEL_SUPPORT.md"><img src="https://img.shields.io/badge/Backend-OpenVINO-0071C5?style=flat-square&amp;logo=intel&amp;logoColor=white" alt="OpenVINO"></a>
+  <a href="CMakeLists.txt"><img src="https://img.shields.io/badge/version-0.1.0-1a73e8?style=flat-square" alt="Isvik.cpp 源码版本 0.1.0"></a>
+  <a href="docs/MODEL_SUPPORT.md"><img src="https://img.shields.io/badge/OpenVINO%20GenAI-2026.4.0.0-0071C5?style=flat-square&amp;logo=intel&amp;logoColor=white" alt="OpenVINO GenAI 2026.4.0.0"></a>
   <a href="docs/BUILDING.md"><img src="https://img.shields.io/badge/C%2B%2B-20-00599C?style=flat-square&amp;logo=cplusplus&amp;logoColor=white" alt="C++20"></a>
   <a href="docs/TENSORRT_GGUF.zh-CN.md"><img src="https://img.shields.io/badge/NVIDIA-TensorRT%20GGUF-76B900?style=flat-square&amp;logo=nvidia&amp;logoColor=white" alt="NVIDIA TensorRT GGUF"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-Apache%202.0-2E7D32?style=flat-square" alt="Apache 2.0 许可证"></a>
@@ -41,6 +42,21 @@ Isvik.cpp 是围绕 OpenVINO、面向 Intel AI PC 开发的 C++20 本地 AI 运�
 | TensorRT-RTX 执行提供程序 | 兼容的 ONNX Runtime GenAI 模型包 | 受支持的 NVIDIA GPU，可按配置回退 |
 
 识别到模型不代表一定能推理。架构、张量编码、分词器文件、已安装的 SDK 和所选设备都会影响兼容性。详见[模型支持说明](docs/MODEL_SUPPORT.md)。
+
+## 版本
+
+**Isvik.cpp 当前源码版本是 0.1.0**，与 [CMake](CMakeLists.txt) 和 Windows 可执行文件资源中的版本一致。它表示当前源码版本；目前尚未发布 GitHub 二进制发行版。
+
+| 组件 | 仓库使用的版本 |
+| --- | --- |
+| OpenVINO GenAI 及其随附运行时（Windows） | `2026.4.0.0` |
+| ONNX Runtime GenAI（Windows） | `0.17.0` |
+| ONNX Runtime（Windows） | `1.26.0` |
+| Slint C++ | `1.18.1` |
+| TensorRT-RTX 执行提供程序 ABI（可选，Windows） | `0.4.2` |
+| TensorRT SDK 与 CUDA Toolkit（可选） | 使用本机安装的版本；不固定补丁版本 |
+
+固定依赖版本在 [CMake 集成文件](cmake/)中定义。构建时只有找到所需 SDK，才会包含对应的可选后端。
 
 ## 开始使用
 

@@ -6,14 +6,14 @@
 
 <p align="center">
   <strong>围绕 OpenVINO 开发，为 Intel AI PC 提供本地 AI 运行环境。</strong><br>
-  C++20 · 桌面聊天 · 交互式 CLI · 本地 API · NVIDIA TensorRT
+  C++20 · OpenVINO GenAI · 桌面聊天 · 交互式 CLI · 本地 API
 </p>
 
 <p align="center">
   <a href="CMakeLists.txt"><img src="https://img.shields.io/badge/version-0.1.0-1a73e8?style=flat-square" alt="Isvik.cpp 源码版本 0.1.0"></a>
   <a href="docs/MODEL_SUPPORT.md"><img src="https://img.shields.io/badge/OpenVINO%20GenAI-2026.4.0.0-0071C5?style=flat-square&amp;logo=intel&amp;logoColor=white" alt="OpenVINO GenAI 2026.4.0.0"></a>
   <a href="docs/BUILDING.md"><img src="https://img.shields.io/badge/C%2B%2B-20-00599C?style=flat-square&amp;logo=cplusplus&amp;logoColor=white" alt="C++20"></a>
-  <a href="docs/TENSORRT_GGUF.zh-CN.md"><img src="https://img.shields.io/badge/NVIDIA-TensorRT%20GGUF-76B900?style=flat-square&amp;logo=nvidia&amp;logoColor=white" alt="NVIDIA TensorRT GGUF"></a>
+  <a href="docs/TENSORRT_GGUF.zh-CN.md"><img src="https://img.shields.io/badge/NVIDIA-TensorRT%20GGUF%20experimental-76B900?style=flat-square&amp;logo=nvidia&amp;logoColor=white" alt="实验性 NVIDIA TensorRT GGUF 支持"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-Apache%202.0-2E7D32?style=flat-square" alt="Apache 2.0 许可证"></a>
   <a href="https://github.com/AbyssGG/Isvik.cpp/actions/workflows/ci.yml"><img src="https://github.com/AbyssGG/Isvik.cpp/actions/workflows/ci.yml/badge.svg" alt="构建状态"></a>
 </p>
@@ -24,7 +24,7 @@
 
 ## Isvik.cpp 是什么？
 
-Isvik.cpp 是围绕 OpenVINO、面向 Intel AI PC 开发的 C++20 本地 AI 运行时，提供桌面聊天界面、可持续交互的双语 CLI、模型库、记忆存储和本地 API 服务。推理在你的设备上运行，无需云端账户。
+Isvik.cpp 是专门为在 Intel AI PC 上使用 OpenVINO 语言模型推理而设计的 C++20 本地 AI 运行时，提供桌面聊天界面、可持续交互的双语 CLI、模型库、记忆存储和本地 API 服务。推理在你的设备上运行，无需云端账户。NVIDIA TensorRT 是可选的实验性集成。
 
 ## 为 Intel AI PC 使用 OpenVINO
 
@@ -34,14 +34,14 @@ Isvik.cpp 是围绕 OpenVINO、面向 Intel AI PC 开发的 C++20 本地 AI 运�
 
 ## 可用后端
 
-| 后端 | 模型输入 | 运行设备 |
-| --- | --- | --- |
-| OpenVINO GenAI | OpenVINO IR 和部分 GGUF 模型 | 受支持的 CPU、GPU 或 NPU |
-| ONNX Runtime GenAI | 兼容的 ONNX 文本生成模型包 | 构建中可用的执行提供程序 |
-| NVIDIA TensorRT | 通过 Isvik 原生插件运行受支持的 Gemma 4 GGUF | NVIDIA GPU |
-| TensorRT-RTX 执行提供程序 | 兼容的 ONNX Runtime GenAI 模型包 | 受支持的 NVIDIA GPU，可按配置回退 |
+| 后端 | 定位 | 模型输入 | 运行设备 |
+| --- | --- | --- | --- |
+| OpenVINO GenAI | 主要运行时 | OpenVINO IR 和部分 GGUF 模型 | 受支持的 CPU、GPU 或 NPU |
+| ONNX Runtime GenAI | 可选 | 兼容的 ONNX 文本生成模型包 | 构建中可用的执行提供程序 |
+| NVIDIA TensorRT | 实验性 | 通过 Isvik 原生插件运行受支持的 Gemma 4 GGUF | NVIDIA GPU |
+| TensorRT-RTX 执行提供程序 | 可选 | 兼容的 ONNX Runtime GenAI 模型包 | 受支持的 NVIDIA GPU，可按配置回退 |
 
-识别到模型不代表一定能推理。架构、张量编码、分词器文件、已安装的 SDK 和所选设备都会影响兼容性。详见[模型支持说明](docs/MODEL_SUPPORT.md)。
+识别到模型不代表一定能推理。架构、张量编码、分词器文件、已安装的 SDK 和所选设备都会影响兼容性。TensorRT GGUF 实现目前仅支持部分模型，且存在已知速度问题，仍在开发中。详见[模型支持说明](docs/MODEL_SUPPORT.md)。
 
 ## 版本
 
@@ -111,7 +111,7 @@ cmake --build --preset linux-gcc-release --parallel
 
 ## TensorRT 如何运行 GGUF
 
-原生 TensorRT 路径直接读取受支持的 Gemma 4 GGUF 文件。Isvik 解析模型元数据，使用文件中内嵌的 BPE 分词器，并从原文件读取量化张量块。自定义 TensorRT `IPluginV3` 将这些压缩字节交给 CUDA 矩阵向量内核。注意力、KV 缓存等其余解码步骤由 Isvik 的 C++ 代码完成。
+实验性的原生 TensorRT 路径直接读取受支持的 Gemma 4 GGUF 文件。Isvik 解析模型元数据，使用文件中内嵌的 BPE 分词器，并从原文件读取量化张量块。自定义 TensorRT `IPluginV3` 将这些压缩字节交给 CUDA 矩阵向量内核。注意力、KV 缓存等其余解码步骤由 Isvik 的 C++ 代码完成。
 
 该路径无需先把 GGUF 转成 ONNX。程序会单独缓存自定义运算的 TensorRT 引擎，不会改写 GGUF 原文件。目前仅支持张量编码受支持的 Gemma 4 文本模型；由于反复读取权重并在主机与 GPU 间传输数据，运行速度可能较慢。
 

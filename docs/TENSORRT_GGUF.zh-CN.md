@@ -2,7 +2,7 @@
 
 [English](TENSORRT_GGUF.md) | [返回 Isvik.cpp 首页](../README.zh-CN.md)
 
-Isvik.cpp 可以在 NVIDIA GPU 上直接运行**受支持的 Gemma 4 文本 GGUF 模型**。程序读取原始 GGUF 文件，并通过自定义 TensorRT 插件执行量化矩阵向量乘法。TensorRT 自身不负责解析 GGUF；文件读取、分词、模型解码循环和 CUDA 内核由 Isvik 实现。这条路径不链接或启动 llama.cpp。
+此功能仍处于实验阶段。Isvik.cpp 主要为 OpenVINO 开发；NVIDIA TensorRT 是可选后端。它可以在 NVIDIA GPU 上直接运行**受支持的 Gemma 4 文本 GGUF 模型**。程序读取原始 GGUF 文件，并通过自定义 TensorRT 插件执行量化矩阵向量乘法。TensorRT 自身不负责解析 GGUF；文件读取、分词、模型解码循环和 CUDA 内核由 Isvik 实现。这条路径不链接或启动 llama.cpp。
 
 ## 环境要求与限制
 

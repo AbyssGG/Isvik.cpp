@@ -6,14 +6,14 @@
 
 <p align="center">
   <strong>Built for OpenVINO and local AI on Intel AI PCs.</strong><br>
-  C++20 · Desktop chat · Interactive CLI · Local APIs · NVIDIA TensorRT
+  C++20 · OpenVINO GenAI · Desktop chat · Interactive CLI · Local APIs
 </p>
 
 <p align="center">
   <a href="CMakeLists.txt"><img src="https://img.shields.io/badge/version-0.1.0-1a73e8?style=flat-square" alt="Isvik.cpp source version 0.1.0"></a>
   <a href="docs/MODEL_SUPPORT.md"><img src="https://img.shields.io/badge/OpenVINO%20GenAI-2026.4.0.0-0071C5?style=flat-square&amp;logo=intel&amp;logoColor=white" alt="OpenVINO GenAI 2026.4.0.0"></a>
   <a href="docs/BUILDING.md"><img src="https://img.shields.io/badge/C%2B%2B-20-00599C?style=flat-square&amp;logo=cplusplus&amp;logoColor=white" alt="C++20"></a>
-  <a href="docs/TENSORRT_GGUF.md"><img src="https://img.shields.io/badge/NVIDIA-TensorRT%20GGUF-76B900?style=flat-square&amp;logo=nvidia&amp;logoColor=white" alt="NVIDIA TensorRT GGUF"></a>
+  <a href="docs/TENSORRT_GGUF.md"><img src="https://img.shields.io/badge/NVIDIA-TensorRT%20GGUF%20experimental-76B900?style=flat-square&amp;logo=nvidia&amp;logoColor=white" alt="Experimental NVIDIA TensorRT GGUF support"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-Apache%202.0-2E7D32?style=flat-square" alt="Apache 2.0 license"></a>
   <a href="https://github.com/AbyssGG/Isvik.cpp/actions/workflows/ci.yml"><img src="https://github.com/AbyssGG/Isvik.cpp/actions/workflows/ci.yml/badge.svg" alt="Build status"></a>
 </p>
@@ -24,7 +24,7 @@
 
 ## What is Isvik.cpp?
 
-Isvik.cpp is a C++20 local AI runtime developed around OpenVINO for Intel AI PCs. It provides a desktop chat interface, a persistent bilingual CLI, a model library, saved memories, and a local API server. Inference runs on your hardware without a cloud account.
+Isvik.cpp is a C++20 local AI runtime designed specifically to make OpenVINO language-model inference accessible on Intel AI PCs. It provides a desktop chat interface, a persistent bilingual CLI, a model library, saved memories, and a local API server. Inference runs on your hardware without a cloud account. NVIDIA TensorRT support is an optional, experimental integration.
 
 ## Built for OpenVINO on Intel AI PCs
 
@@ -34,14 +34,14 @@ The model library, chat, CLI, and API share the same runtime services. This lets
 
 ## Supported backends
 
-| Backend | Model input | Where it runs |
-| --- | --- | --- |
-| OpenVINO GenAI | OpenVINO IR and selected GGUF models | Supported CPU, GPU, or NPU devices |
-| ONNX Runtime GenAI | Compatible ONNX text-generation packages | Providers available in the build |
-| NVIDIA TensorRT | Supported Gemma 4 GGUF models through Isvik's native plugin | NVIDIA GPU |
-| TensorRT-RTX provider | Compatible ONNX Runtime GenAI packages | Supported NVIDIA GPU, with configured fallback |
+| Backend | Role | Model input | Where it runs |
+| --- | --- | --- | --- |
+| OpenVINO GenAI | Primary runtime | OpenVINO IR and selected GGUF models | Supported CPU, GPU, or NPU devices |
+| ONNX Runtime GenAI | Optional | Compatible ONNX text-generation packages | Providers available in the build |
+| NVIDIA TensorRT | Experimental | Supported Gemma 4 GGUF models through Isvik's native plugin | NVIDIA GPU |
+| TensorRT-RTX provider | Optional | Compatible ONNX Runtime GenAI packages | Supported NVIDIA GPU, with configured fallback |
 
-Model recognition does not guarantee inference support. Architecture, tensor encoding, tokenizer assets, installed SDKs, and the selected device all matter. See [model support](docs/MODEL_SUPPORT.md).
+Model recognition does not guarantee inference support. Architecture, tensor encoding, tokenizer assets, installed SDKs, and the selected device all matter. The TensorRT GGUF implementation has limited model coverage and known performance costs; it is still being developed. See [model support](docs/MODEL_SUPPORT.md).
 
 ## Versions
 
@@ -111,7 +111,7 @@ The default address is `http://127.0.0.1:1234`. The server exposes Isvik-native 
 
 ## How TensorRT runs GGUF
 
-The native TensorRT path reads a supported Gemma 4 GGUF file in place. Isvik parses its metadata, uses its embedded BPE tokenizer, and reads packed tensor blocks from the original file. A custom TensorRT `IPluginV3` passes those packed bytes to CUDA matrix-vector kernels. Isvik's C++ runtime handles the remaining decoding steps, including attention and the KV cache.
+The experimental native TensorRT path reads a supported Gemma 4 GGUF file in place. Isvik parses its metadata, uses its embedded BPE tokenizer, and reads packed tensor blocks from the original file. A custom TensorRT `IPluginV3` passes those packed bytes to CUDA matrix-vector kernels. Isvik's C++ runtime handles the remaining decoding steps, including attention and the KV cache.
 
 This path does not require a GGUF-to-ONNX conversion. TensorRT engines for the custom operation are cached separately; the GGUF model file is not rewritten. Current support is limited to Gemma 4 text models with supported tensor encodings, and this implementation can be slow because it repeatedly reads weights and moves data between host and GPU.
 

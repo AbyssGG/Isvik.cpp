@@ -2,7 +2,7 @@
 
 [简体中文](TENSORRT_GGUF.zh-CN.md) | [Isvik.cpp home](../README.md)
 
-Isvik.cpp has a native path for **supported Gemma 4 text GGUF models** on NVIDIA GPUs. It reads the original GGUF file and uses a custom TensorRT plugin for quantized matrix-vector multiplication. TensorRT itself does not parse GGUF; Isvik supplies the file reader, tokenizer, model loop, and CUDA kernel. This path does not link or launch llama.cpp.
+This integration is experimental. Isvik.cpp is built primarily for OpenVINO; NVIDIA TensorRT is an optional backend. Isvik.cpp has a native path for **supported Gemma 4 text GGUF models** on NVIDIA GPUs. It reads the original GGUF file and uses a custom TensorRT plugin for quantized matrix-vector multiplication. TensorRT itself does not parse GGUF; Isvik supplies the file reader, tokenizer, model loop, and CUDA kernel. This path does not link or launch llama.cpp.
 
 ## Requirements and limits
 

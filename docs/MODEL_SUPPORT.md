@@ -16,6 +16,8 @@ The TensorRT-RTX execution provider can run supported graph portions for compati
 
 ## TensorRT
 
+The NVIDIA TensorRT integration is experimental. OpenVINO GenAI remains the project's primary runtime.
+
 The TensorRT backend provides named-tensor execution for supported ONNX networks. TensorRT engine files are specific to the TensorRT version, GPU architecture, and build options used to create them.
 
 The optional native TensorRT GGUF runtime reads supported Gemma 4 GGUF weights without rewriting the model. Runtime support depends on the model architecture and tensor encodings. Native GGUF inference can require substantial GPU memory and can be slower than optimized engines.

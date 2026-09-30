@@ -136,3 +136,5 @@ See the [code of conduct](CODE_OF_CONDUCT.md), [security policy](SECURITY.md), a
 ## License
 
 Isvik.cpp is licensed under the [Apache License 2.0](LICENSE). Third-party dependencies retain their own license terms.
+
+The Isvik.cpp logo and wordmark carry a `© 2026 AbyssGG` notice. The Apache-2.0 license does not grant trademark rights to the project name or logo. See the [branding guidance](BRANDING.md) before reusing them.

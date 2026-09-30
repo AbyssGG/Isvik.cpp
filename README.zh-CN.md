@@ -136,3 +136,5 @@ cmake --build --preset linux-gcc-release --parallel
 ## 许可证
 
 Isvik.cpp 使用 [Apache License 2.0](LICENSE)。第三方依赖保留各自的许可证条款。
+
+Isvik.cpp 的 Logo 和字标标注为 `© 2026 AbyssGG`。Apache-2.0 许可证不授予项目名称或 Logo 的商标使用权。复用前请阅读[品牌使用说明](BRANDING.md)。

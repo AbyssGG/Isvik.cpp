@@ -1,14 +1,14 @@
 # Isvik.cpp
 
 <p align="center">
-  <img src="resources/isvik-cpp-banner.png" alt="Isvik.cpp logo on a dark banner" width="100%">
+  <img src="https://raw.githubusercontent.com/AbyssGG/Isvik.cpp/main/resources/isvik-cpp-banner.png" alt="Isvik.cpp logo on a dark banner" width="100%">
 </p>
 
 <p align="center">
   <a href="https://github.com/AbyssGG/Isvik" title="Original Isvik project">
     <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="resources/isvik-lockup.png">
-      <img src="resources/isvik-lockup-black.png" alt="Original Isvik logo" width="240">
+      <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/AbyssGG/Isvik.cpp/main/resources/isvik-lockup.png">
+      <img src="https://raw.githubusercontent.com/AbyssGG/Isvik.cpp/main/resources/isvik-lockup-black.png" alt="Original Isvik logo" width="240">
     </picture>
   </a><br>
   <sub>Original Isvik logo · © 2026 AbyssGG</sub>

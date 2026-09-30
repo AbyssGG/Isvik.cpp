@@ -6,7 +6,7 @@
 
 <p align="center">
   <strong>Built for OpenVINO and local AI on Intel AI PCs.</strong><br>
-  C++20 · OpenVINO GenAI · Desktop chat · Interactive CLI · Local APIs
+  C++20 · OpenVINO GenAI · Optional ONNX support · Desktop chat · Interactive CLI · Local APIs
 </p>
 
 <p align="center">
@@ -24,7 +24,7 @@
 
 ## What is Isvik.cpp?
 
-Isvik.cpp is a C++20 local AI runtime designed specifically to make OpenVINO language-model inference accessible on Intel AI PCs. It provides a desktop chat interface, a persistent bilingual CLI, a model library, saved memories, and a local API server. Inference runs on your hardware without a cloud account. NVIDIA TensorRT support is an optional, experimental integration.
+Isvik.cpp is a C++20 local AI runtime designed specifically to make OpenVINO language-model inference accessible on Intel AI PCs. It provides a desktop chat interface, a persistent bilingual CLI, a model library, saved memories, and a local API server. Inference runs on your hardware without a cloud account. Compatible ONNX Runtime GenAI model packages are supported through an optional backend; NVIDIA TensorRT is an experimental integration.
 
 ## Built for OpenVINO on Intel AI PCs
 

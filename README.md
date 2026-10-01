@@ -56,7 +56,7 @@ Model recognition does not guarantee inference support. Architecture, tensor enc
 
 ## Versions
 
-**Isvik.cpp is at source version 0.1.0**, as set in [CMake](CMakeLists.txt) and the Windows executable resource. This identifies the current source; no binary GitHub release has been published yet.
+**Isvik.cpp is at source version 0.1.0**, as set in [CMake](CMakeLists.txt) and the Windows executable resource. The Windows x64 beta package is published as [`isvik-b010-x64`](https://github.com/AbyssGG/Isvik.cpp/releases/tag/isvik-b010-x64).
 
 | Component | Version used by this repository |
 | --- | --- |

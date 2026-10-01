@@ -56,7 +56,7 @@ Isvik.cpp 是专门为在 Intel AI PC 上使用 OpenVINO 语言模型推理而�
 
 ## 版本
 
-**Isvik.cpp 当前源码版本是 0.1.0**，与 [CMake](CMakeLists.txt) 和 Windows 可执行文件资源中的版本一致。它表示当前源码版本；目前尚未发布 GitHub 二进制发行版。
+**Isvik.cpp 当前源码版本是 0.1.0**，与 [CMake](CMakeLists.txt) 和 Windows 可执行文件资源中的版本一致。Windows x64 测试版以 [`isvik-b010-x64`](https://github.com/AbyssGG/Isvik.cpp/releases/tag/isvik-b010-x64) 发布。
 
 | 组件 | 仓库使用的版本 |
 | --- | --- |
